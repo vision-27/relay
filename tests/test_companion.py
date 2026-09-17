@@ -18,6 +18,8 @@ from relay.discovery import same_repository, metadata
 from relay.join import invitation
 from relay.processes import background_options
 from relay.store import Problem
+from relay.server import Hub
+from relay.store import Store
 
 
 class JoinTests(unittest.TestCase):
@@ -161,6 +163,23 @@ class JoinTests(unittest.TestCase):
 
 
 class LocalSecurityTests(unittest.TestCase):
+    def test_servers_bind_without_reverse_dns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            store = Store(root / 'hub')
+            companion = Companion(root / 'companion')
+            with patch('socket.getfqdn', side_effect=AssertionError('Reverse DNS must not run')):
+                for factory in (lambda: Hub(('127.0.0.1', 0), store),
+                                lambda: CompanionServer(companion)):
+                    server = factory()
+                    try:
+                        self.assertEqual(server.server_name, '127.0.0.1')
+                        self.assertEqual(server.server_port, server.server_address[1])
+                        self.assertGreater(server.server_port, 0)
+                        self.assertIn('http://127.0.0.1:' + str(server.server_port), server.origins)
+                    finally:
+                        server.server_close()
+
     def test_real_background_service_starts_and_quits_without_a_terminal(self):
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile() as output:
             # Capture a stack trace if startup hangs, not just early exceptions.

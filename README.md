@@ -4,7 +4,7 @@
 
 Shared understanding and coordinated coding for developers using Codex and Claude Code on different computers.
 
-**Current version: 0.6.2.** Windows, macOS and Linux are supported targets. This patch fixes a reproduced Windows HTTPS trust-chain failure and is active on the hub and Windows companion, with private Homebrew revision 12 published. Two physical Windows–Mac trials completed on 0.6.0; physical Mac sleep/wake acceptance of the updated client remains pending. See [release notes](CHANGELOG.md) and [verified results](POLISH_QA.md).
+**Current source version: 0.6.3.** Windows, macOS and Linux are supported targets. This patch fixes a macOS background-startup hang discovered by GitHub CI and cross-platform test fixtures. The previously activated hub/companion and private Homebrew revision 12 remain on 0.6.2 until separately updated. Two physical Windows–Mac trials completed on 0.6.0; physical Mac sleep/wake acceptance of the updated client remains pending. See [release notes](CHANGELOG.md), [current CI](https://github.com/vision-27/relay/actions/workflows/ci.yml) and [verified results](POLISH_QA.md).
 
 ## What Relay does
 

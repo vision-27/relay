@@ -11,6 +11,7 @@ import threading
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from socketserver import TCPServer
 from urllib.parse import parse_qs, urlsplit
 
 from .store import Problem, Store
@@ -39,6 +40,13 @@ def configured_origin(directory, explicit=None):
 
 class Hub(ThreadingHTTPServer):
     daemon_threads = True
+
+    def server_bind(self):
+        # HTTPServer resolves a display-only FQDN here, which can hang macOS
+        # background startup. Use the bound address; authorization uses the
+        # explicit origins below, never reverse DNS. CompanionServer inherits it.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
 
     def __init__(self, address, store, public_origin=None):
         super().__init__(address, Handler)

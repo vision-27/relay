@@ -1,6 +1,6 @@
 [project]
 name = "relay-workspace"
-version = "0.6.2"
+version = "0.6.3"
 description = "Transfer the understanding behind your code."
 requires-python = ">=3.11"
 dependencies = []

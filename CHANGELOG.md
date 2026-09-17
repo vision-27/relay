@@ -1,5 +1,22 @@
 # Release notes
 
+## 0.6.3 — 2026-09-17
+
+- Remove the HTTP server's unnecessary reverse-DNS lookup during binding. A
+  captured macOS CI stack showed this lookup blocking background companion
+  startup and supervisor recovery. Both hub and companion now use their bound
+  address for display metadata; explicit Host/Origin authorization is unchanged.
+- Canonicalize trusted temporary test roots to handle macOS `/var` aliases and
+  Windows DOS-short user names without weakening symlink/path protections.
+- Add a redirected-worktree rejection regression, forbid reverse DNS in server
+  startup tests, and capture child logs/stacks when background startup fails.
+- Synchronize the outage regression with the completed persisted-guard update
+  instead of racing its in-memory failure counter.
+
+These changes are being verified in GitHub's six-job OS/Python matrix. They do
+not restart existing Relay sessions or update the private Homebrew tap. Historical
+0.6.2 check failures remain attached to that tag; see Actions for current results.
+
 ## 0.6.2 — 2026-09-16
 
 - Fix Windows Python TLS chain selection by loading server-authentication roots from the Windows ROOT store, not cached intermediate certificates from its CA store. An expired cached ISRG cross-sign previously masked the valid shared-hub chain. Hostname and certificate verification remain mandatory; no machine trust settings are changed. macOS/Linux retain Python's default context.

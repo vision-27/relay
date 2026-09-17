@@ -256,10 +256,13 @@ class RuntimePolishTests(unittest.TestCase):
             try:
                 r.connect()
                 until(lambda: r.network_failures > 0, 5)
-                self.assertFalse(r.network_ok)
-                self.assertTrue(r.active)
-                with self.assertRaisesRegex(ValueError, 'paused, offline'):
-                    tools.call('relay_files', {})
+                # The counter changes before save_control completes. Observe
+                # the completed transition, not an unsynchronized intermediate.
+                with r.lock:
+                    self.assertFalse(r.network_ok)
+                    self.assertTrue(r.active)
+                    with self.assertRaisesRegex(ValueError, 'paused, offline'):
+                        tools.call('relay_files', {})
                 unavailable.clear()
                 # The heartbeat persists the guard inside its lock before
                 # announcing reconnection; observe that completed boundary.
