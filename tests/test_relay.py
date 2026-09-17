@@ -23,7 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 class RelayIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.directory = Path(self.temp.name)
+        # Match the canonical roots used by onboarding. CI temp directories may
+        # use macOS /var aliases or Windows DOS-short user names.
+        self.directory = Path(self.temp.name).resolve()
         self.store = Store(self.directory / 'hub')
         self.server = Hub(('127.0.0.1', 0), self.store)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)

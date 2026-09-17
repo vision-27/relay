@@ -16,6 +16,7 @@ from relay.client import Client
 from relay.companion import Companion, CompanionServer, runtime
 from relay.discovery import same_repository, metadata
 from relay.join import invitation
+from relay.processes import background_options
 from relay.store import Problem
 
 
@@ -161,9 +162,10 @@ class JoinTests(unittest.TestCase):
 
 class LocalSecurityTests(unittest.TestCase):
     def test_real_background_service_starts_and_quits_without_a_terminal(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile() as output:
             process = subprocess.Popen([sys.executable, '-m', 'relay', 'desktop', '--data', directory],
-                                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                       stdin=subprocess.DEVNULL, stdout=output, stderr=output,
+                                       **background_options())
             try:
                 ready = None
                 for _ in range(40):
@@ -171,7 +173,10 @@ class LocalSecurityTests(unittest.TestCase):
                     if ready:
                         break
                     time.sleep(.1)
-                self.assertIsNotNone(ready)
+                if ready is None:
+                    output.seek(0)
+                    detail = output.read().decode('utf-8', errors='replace')
+                    self.fail(f'Background service did not start; exit={process.poll()}: {detail}')
                 client = Client(ready['origin'], ready['capability'])
                 self.assertEqual(client.request('/api/state')['connections'], [])
                 client.request('/api/quit', {})

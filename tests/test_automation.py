@@ -23,7 +23,8 @@ def artifact(path='result.txt', content='ready', base='missing'):
 class GitAutomationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        # Guards require a canonical root, as supplied by real onboarding.
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / 'source'
         self.repo.mkdir()
         git(self.repo, 'init')
@@ -32,6 +33,18 @@ class GitAutomationTests(unittest.TestCase):
         self.base = git(self.repo, 'rev-parse', 'HEAD')
 
     def tearDown(self): self.temp.cleanup()
+
+    def test_worktree_rejects_redirected_destination(self):
+        target = self.root / 'outside'
+        target.mkdir()
+        alias = self.root / 'redirected'
+        try:
+            alias.symlink_to(target, target_is_directory=True)
+        except OSError:
+            self.skipTest('Directory symlink creation is unavailable on this host')
+        with self.assertRaisesRegex(ValueError, 'redirected'):
+            worktree(self.repo, alias / 'worker')
+        self.assertFalse((target / 'worker').exists())
 
     def test_isolation_preserves_dirty_source(self):
         (self.repo / 'original.txt').write_text('private dirty changes')

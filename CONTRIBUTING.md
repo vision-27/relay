@@ -25,6 +25,14 @@ Optional editable installation belongs in a virtual environment: `python -m pip 
 
 Run native/private-network scripts only after reading their setup and obtaining approval for model usage and any integration commands. Never point automated fault-injection tests at a live shared hub. Preserve original checkouts and conversations.
 
+Filesystem fixtures must canonicalize their trusted temporary root with
+`Path(temp_directory).resolve()` before deriving guarded paths or comparing them
+with onboarding results. macOS may expose temporary storage through `/var`
+(an alias of `/private/var`), and Windows runners may use DOS-short user names.
+Keep deliberately symlinked test destinations unresolved: those must still be
+rejected by the write, installation and packaging guards. Background-process
+tests capture their isolated child logs so CI startup failures are diagnosable.
+
 The prepared GitHub Actions workflow runs isolated tests on Windows, macOS and Linux with Python 3.11 and 3.13. It uses read-only repository permissions, no stored checkout credential and commit-pinned [checkout](https://github.com/actions/checkout) / [setup-python](https://github.com/actions/setup-python) actions. No private workspace token or coding-agent login is needed. A workflow file is not proof CI has run.
 
 ## Change checklist

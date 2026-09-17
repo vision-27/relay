@@ -145,7 +145,7 @@ class StartupTests(unittest.TestCase):
 
     def test_explicit_enable_disable_preserves_foreign_registration(self):
         with tempfile.TemporaryDirectory() as tmp:
-            spec = dict(kind='file', path=str(Path(tmp)/'autostart/relay.desktop'), value='managed fixture')
+            spec = dict(kind='file', path=str(Path(tmp).resolve()/'autostart/relay.desktop'), value='managed fixture')
             with patch('relay.lifecycle.startup_spec', return_value=spec):
                 self.assertFalse(startup_status(tmp))
                 self.assertTrue(configure_startup(tmp, True)['enabled'])
@@ -157,11 +157,11 @@ class StartupTests(unittest.TestCase):
                 self.assertEqual(Path(spec['path']).read_text(), 'someone else')
 
     def test_supervisor_recovers_real_child_crash_and_honors_quit(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            directory = Path(tmp)
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryFile() as output:
+            directory = Path(tmp).resolve()
             atomic_json(directory/'desktop-control.json', {'run': True})
             process = subprocess.Popen([sys.executable, '-m', 'relay', 'supervise', '--data', tmp, '--kind', 'desktop'],
-                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **background_options())
+                stdin=subprocess.DEVNULL, stdout=output, stderr=output, **background_options())
             seen_children = set()
             def wait_ready(previous=None):
                 until = time.monotonic() + 25
@@ -174,7 +174,12 @@ class StartupTests(unittest.TestCase):
                         if pid: seen_children.add(pid)
                         if pid and pid != previous: return value, pid
                     time.sleep(.2)
-                self.fail('Supervisor did not restore local app')
+                output.seek(0)
+                detail = output.read().decode('utf-8', errors='replace')
+                child_log = directory / 'desktop-background.log'
+                if child_log.exists():
+                    detail += child_log.read_text(encoding='utf-8', errors='replace')
+                self.fail(f'Supervisor did not restore local app; exit={process.poll()}: {detail}')
             try:
                 value, first = wait_ready()
                 # Only terminate the fixture child created by our owned supervisor.
