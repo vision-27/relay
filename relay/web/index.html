@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Relay — shared understanding</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/live.css"><script src="/app.js" defer></script></head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" width="33" height="33">relay<span> / developer workspace</span></a>
+    <div class="workspace-switch"><span class="workspace-icon">W</span><div><strong>Your workspace</strong><small>A shared place for the why.</small></div><span class="tiny-dot"></span></div>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="Workspace"><button class="nav-item active" data-view="context"><span>◈</span> Overview <i id="feature-count">0</i></button><button class="nav-item" data-view="activity"><span>≋</span> Activity</button><button class="nav-item" data-view="inbox"><span>↔</span> Questions <i id="question-count" aria-label="Unanswered questions">0</i></button><button class="nav-item" data-view="sessions"><span>⌘</span> Agents <i id="session-count">0</i></button></nav>
+    <div class="nav-label project-label">PROJECTS <button id="add-project" class="icon-btn" aria-label="Create project">+</button></div>
+    <div id="project-list"></div>
+    <div class="sidebar-bottom"><div class="local-note"><span class="tiny-dot"></span> Local execution. Shared knowledge.</div><button id="invite" class="secondary full">Invite a teammate <span>↗</span></button><button id="profile" class="profile"><span class="avatar" id="my-avatar">Y</span><span id="my-name">Connecting…</span><small>Edit profile</small></button></div>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="project-name">Getting started</strong></div><div class="top-actions"><span id="connection" class="connection">Connecting</span><button id="setup" class="text-btn">Setup &amp; help</button></div></header>
+    <main>
+      <section class="page-heading"><div><div class="eyebrow" id="eyebrow">YOUR TEAM’S UNDERSTANDING, CONNECTED</div><h1 id="page-title">Understanding, in sync.</h1><p id="page-description">Context grows as your agents work.</p></div><button id="publish" class="primary">+ Connect session</button></section>
+      <div id="stats" class="stats"></div>
+      <section id="workspace-body"></section>
+    </main>
+    <footer><span>Local agents. Continuous context. Fewer gaps.</span><span>RELAY / CONNECTED SESSIONS 0.2</span></footer>
+  </div>
+  <dialog id="modal"><div class="modal-top"><span class="eyebrow">RELAY WORKSPACE</span><button id="close-modal" class="icon-btn" aria-label="Close dialog">×</button></div><div id="modal-content"></div></dialog>
+  <div id="toast" role="status" hidden></div>
+</body></html>

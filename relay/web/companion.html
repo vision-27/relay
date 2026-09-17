@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relay · This computer</title>
+  <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/companion.css">
+  <script src="/companion.js" defer></script>
+</head>
+<body><main>
+  <header><a class="brand" href="/">relay<span>THIS COMPUTER</span></a><button id="quit" class="quiet">Quit Relay</button></header>
+  <nav id="navigation" hidden aria-label="Main navigation">
+    <button id="nav-agent" aria-current="page">My agent</button><button id="nav-team">Team workspace</button><button id="settings" class="quiet">Settings</button>
+  </nav>
+  <section class="intro"><h1 id="page-title">Connect your agent.</h1><p id="page-subtitle">Join your team, choose a conversation, and keep coding.</p></section>
+  <ol id="setup-steps" class="steps" aria-label="Connection progress"><li>1. Join team</li><li>2. Choose folder</li><li>3. Share conversation</li></ol>
+  <div id="network-status" class="network-warning" role="status" hidden><strong>Workspace connection needs attention</strong><p id="network-message"></p><p class="small">Your saved connections are still here. Check the workspace host and private network; you do not need to install Relay again.</p><button id="retry-network">Retry connection</button></div>
+  <div id="error" role="alert" tabindex="-1" hidden></div><div id="notice" role="status" hidden></div>
+  <section id="workspace" class="card">
+    <div class="row"><h2>Join your workspace</h2><button id="cancel-join" class="quiet" hidden>Cancel</button></div>
+    <p>Use your teammate's invite link. Already a member? Use the workspace address.</p>
+    <form id="join"><label for="url">Invite link or workspace address</label><input id="url" type="url" required placeholder="https://your-team…" autocomplete="off"><button class="primary" type="submit">Connect workspace</button></form>
+    <div id="pairing" role="status"></div>
+    <p class="small">An approval tab opens once. Compare the code there, then return here. No access token to copy.</p>
+  </section>
+  <section id="connections" hidden></section>
+  <section id="team" hidden>
+    <div class="row"><p class="small">Shared goals below show team coding progress. Connection checks cover conversation sharing.</p><button id="team-check">Check team connection</button></div>
+    <div class="team-toolbar"><label for="team-project">Project</label><select id="team-project"></select><input id="team-search" type="search" placeholder="Search team context…" aria-label="Search shared context"></div>
+    <div class="tabs" role="group" aria-label="Team view"><button data-team-view="context" aria-pressed="true">Shared context</button><button data-team-view="questions" aria-pressed="false">Questions</button><button data-team-view="activity" aria-pressed="false">Activity</button></div>
+    <p id="team-freshness" class="small" role="status"></p><div id="team-body"></div>
+  </section>
+  <section id="choose" class="card" hidden>
+    <div class="row"><h2 id="choose-title">Where are you coding?</h2><button id="cancel-connection" class="quiet" hidden>Cancel</button></div>
+    <form id="select-form">
+      <p>Choose the project folder on this computer. Nothing is shared yet.</p>
+      <p id="project-empty" class="network-warning" hidden>This workspace has no project yet. Open Settings → Manage invites and ownership, create a project there, then return here. The list updates automatically.</p>
+      <label for="project">Workspace project</label><select id="project" required></select>
+      <label for="provider">Coding agent</label><select id="provider"><option value="claude">Claude Code</option><option value="codex">Codex</option></select>
+      <label for="repo">Coding repository on this computer</label><div class="folder"><input id="repo" list="repos" required placeholder="Choose your project folder"><button id="browse" type="button">Choose folder</button></div><datalist id="repos"></datalist>
+      <button type="submit" class="primary">Find conversations</button>
+    </form>
+    <div id="session-area" hidden>
+      <p id="selected-repository" class="small"></p><button id="back-folder" class="quiet">Change folder or agent</button>
+      <label for="session-search">Find a conversation</label><input id="session-search" type="search" placeholder="Search by conversation title">
+      <label for="session">Conversation to share</label><select id="session"></select><p id="session-hint" class="small" role="status"></p>
+      <details><summary>Name this feature (optional)</summary><label for="feature">Feature name</label><input id="feature" maxlength="160" placeholder="Defaults to your repository name"></details>
+      <div class="consent"><label><input id="consent" type="checkbox"> Share this selected conversation with all invited workspace members.</label>
+        <p>Visible messages, activity, and generated explanations will be uploaded. Known secrets are redacted, but detection is not guaranteed.</p>
+        <p>Read-only explanations use your existing agent login, up to 12 model calls/hour. Other conversations stay private.</p>
+        <details><summary>What else does sharing enable?</summary><p>Read-only explanation forks use your existing agent login: up to 12 model calls/hour. They do not edit code. Other conversations are not shared. You can pause sharing at any time.</p></details>
+      </div>
+      <button id="connect" class="primary">Start sharing</button>
+    </div>
+  </section>
+  <dialog id="detail"><button id="close-detail" class="quiet" aria-label="Close dialog">Close</button><div id="detail-body"></div></dialog>
+  <footer>Close this tab and keep coding; Relay continues in the background.<br>Pause sharing to stop uploads. Quit Relay to stop this app.</footer>
+</main></body></html>
