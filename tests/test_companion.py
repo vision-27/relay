@@ -163,7 +163,11 @@ class JoinTests(unittest.TestCase):
 class LocalSecurityTests(unittest.TestCase):
     def test_real_background_service_starts_and_quits_without_a_terminal(self):
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile() as output:
-            process = subprocess.Popen([sys.executable, '-m', 'relay', 'desktop', '--data', directory],
+            # Capture a stack trace if startup hangs, not just early exceptions.
+            probe = ('import faulthandler,runpy; '
+                     'faulthandler.dump_traceback_later(3, repeat=True); '
+                     'runpy.run_module("relay", run_name="__main__")')
+            process = subprocess.Popen([sys.executable, '-c', probe, 'desktop', '--data', directory],
                                        stdin=subprocess.DEVNULL, stdout=output, stderr=output,
                                        **background_options())
             try:
@@ -176,7 +180,8 @@ class LocalSecurityTests(unittest.TestCase):
                 if ready is None:
                     output.seek(0)
                     detail = output.read().decode('utf-8', errors='replace')
-                    self.fail(f'Background service did not start; exit={process.poll()}: {detail}')
+                    files = sorted(path.name for path in Path(directory).iterdir())
+                    self.fail(f'Background service did not start; exit={process.poll()}; files={files}: {detail}')
                 client = Client(ready['origin'], ready['capability'])
                 self.assertEqual(client.request('/api/state')['connections'], [])
                 client.request('/api/quit', {})
