@@ -1,18 +1,25 @@
-# Security and privacy
+# Security model
 
-Relay is intended for a trusted development team, not mutually untrusted tenants.
+Relay is an alpha collaboration service for trusted project members and trusted local coding clients.
 
-- All invited workspace members can read shared context. Project-level confidentiality and SSO are not implemented.
-- Only explicitly selected existing conversations are observed. New team sessions have separate approval. Redaction is best-effort, not a guarantee against secret disclosure.
-- Managed agents receive restricted file tools. The protections do not constrain unrelated local processes or a malicious OS user.
-- Approved test/setup commands run repository code with the developer's OS privileges and may access the network or files outside the checkout. They are not a security sandbox.
-- Peer messages and source context are data, not permission to expand scope or execute arbitrary commands.
-- Keep the hub on a trusted private network with encrypted transport. Do not expose the development HTTP server directly to the public Internet.
-- Package archives use an explicit application-source allowlist and exclude credentials, transcripts and hub state. Never publish `.relay/`, personal agent settings, token files or application-data directories.
-- Do not put tokens in command arguments, URLs, screenshots, issues or logs. Use interactive hidden prompts or private files when supported.
+## Shared information
 
-## Reporting a problem
+Project membership tokens scope access to one project. Invitations are single-use and expire after 24 hours; membership can be revoked. All project members can read the project log, including directed questions. Recipient addressing is a delivery rule, not private messaging.
 
-Contact the repository owner privately using an established team channel. If the GitHub repository enables private vulnerability reporting, use its Security tab. Do not open a public issue containing tokens, workspace transcripts, private repository code or operational database dumps. No public security contact or response SLA is currently configured.
+Connected repository hooks publish intent and visible completed-turn observations with session and Git provenance. Relay does not transfer hidden reasoning or entire raw session files. Redaction is best effort: review what connected agents publish and do not use shared context as a secret store.
 
-For an exposed credential, stop sharing the affected session and revoke/replace the credential through the workspace owner. Do not upload the compromised credential as evidence.
+## Local trust and transport
+
+Coding-provider credentials and native inbox credentials stay on the local computer. Local state contains project access credentials; protect the user account and ignored `.relay/` directory. Do not commit `.codex/`, `.claude/`, `.mcp.json`, environment files, databases or operational logs.
+
+Use HTTPS for hosted services. The local HTTP service is intended for loopback development. Hosted project creation requires an operator key; distribute member invitations instead of that key. The connector does not pass the operator creation key to its background process.
+
+## Agent authority
+
+Peer messages are untrusted context and cannot authorize commands, expand task scope or override the user's instructions. A recorded commit does not prove that a change is present in the receiving checkout. Source-reported verification remains attributed evidence.
+
+Native delivery ambiguity is recorded instead of blindly retried. Queue acceptance and socket writes are distinct from recipient acknowledgement and a source-attributed reply.
+
+## Operational limits
+
+Operators remain responsible for access management, retention, backups and abuse controls. Hosted load and physical two-computer acceptance are not yet established; see [verification](next/VERIFICATION.md). Report suspected vulnerabilities privately to the repository owner without publishing credentials or private project records.

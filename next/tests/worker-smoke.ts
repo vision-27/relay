@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import WebSocket from 'ws';
+import { api } from '../node/client.js';
+import { binding, code } from './helpers.js';
+import type { RelayEvent } from '../core/types.js';
+const server=process.env.RELAY_TEST_SERVER??'http://127.0.0.1:8788';
+if(!['localhost','127.0.0.1','[::1]'].includes(new URL(server).hostname))throw new Error('This fixture only targets a local emulator');
+const key=process.env.RELAY_TEST_KEY??'local-test',project=crypto.randomUUID();
+const a=await api<{token:string;memberId:string}>(server,project,key,'create',{name:'Worker smoke',ownerName:'Alice',repository:code.repository});
+const invite=await api<{code:string}>(server,project,a.token,'invite',{});
+const b=await api<{token:string;memberId:string}>(server,project,'','join',{code:invite.code,name:'Bob',repository:code.repository});
+const alice=binding(a.memberId,'codex'),bob=binding(b.memberId,'claude');
+await api(server,project,a.token,'sessions',alice);await api(server,project,b.token,'sessions',bob);
+const socket=new WebSocket(server.replace(/^http/,'ws')+`/projects/${project}/stream`,{headers:{Authorization:`Bearer ${b.token}`}});
+let notifications=0;socket.on('message',()=>notifications++);
+await new Promise<void>((resolve,reject)=>{socket.once('open',resolve);socket.once('error',reject);});
+try {
+  const event={id:crypto.randomUUID(),sessionId:alice.id,targetSessionId:bob.id,kind:'question',text:'Does the worker persist and replay this message?',paths:[]};
+  const sent=await api<RelayEvent>(server,project,a.token,'events',event);
+  const retried=await api<RelayEvent>(server,project,a.token,'events',event);assert.equal(sent.seq,retried.seq);
+  const page=await api<{events:RelayEvent[]}>(server,project,b.token,'events?after=0');assert.equal(page.events.length,1);
+  await api(server,project,b.token,'receipts',{eventId:sent.id,sessionId:bob.id,state:'delivered',detail:'Fixture acknowledgement'});
+  await api(server,project,b.token,'events',{id:crypto.randomUUID(),sessionId:bob.id,targetSessionId:alice.id,replyTo:sent.id,kind:'reply',text:'Yes, durable message received.',paths:[]});
+  const snapshot=await api<any>(server,project,a.token,'snapshot');assert.equal(snapshot.receipts.find((r:any)=>r.eventId===sent.id).state,'answered');
+  await assert.rejects(api(server,crypto.randomUUID(),a.token,'snapshot'),/revoked|expired|not found/i);
+  assert.ok(notifications>0);
+  const closed=new Promise<number>(resolve=>socket.once('close',code=>resolve(code)));
+  await api(server,project,a.token,'revoke',{memberId:b.memberId});
+  assert.equal(await closed,1008);await assert.rejects(api(server,project,b.token,'snapshot'),/revoked/);
+  console.log('Cloudflare local emulator: PASS — SQLite transactions, membership isolation, single-use invite, idempotent events, replay, hibernation WebSocket API, replies, revocation. No cloud deployment or real agent was used.');
+}finally{socket.terminate();}

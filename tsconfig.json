@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "NodeNext", "moduleResolution": "NodeNext",
+    "strict": true, "noUncheckedIndexedAccess": true, "esModuleInterop": true,
+    "skipLibCheck": true, "rootDir": "next", "outDir": "out",
+    "types": ["node"], "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": ["next/core/**/*.ts", "next/node/**/*.ts", "next/tests/**/*.ts"]
+}

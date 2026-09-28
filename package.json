@@ -1,0 +1,44 @@
+{
+  "name": "@relay-workspace/cli",
+  "version": "0.7.0-alpha.1",
+  "private": true,
+  "description": "Shared context for the coding sessions you already use.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "bin": {
+    "relay-next": "out/node/cli.js"
+  },
+  "files": [
+    "out/core",
+    "out/node",
+    "next/README.md",
+    "next/BACKEND_DECISION.md",
+    "next/VERIFICATION.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p next/worker/tsconfig.json --noEmit",
+    "test": "npm run build && node --test out/tests/*.test.js",
+    "relay": "node out/node/cli.js",
+    "connect:hosted": "node out/node/hosted-connect.js",
+    "demo": "npm run build && node out/tests/demo.js",
+    "test:worker": "node out/tests/worker-smoke.js",
+    "test:hosted": "npm run build && node out/tests/hosted-smoke.js",
+    "test:native": "npm run build && node out/tests/native-smoke.js",
+    "prepack": "npm run build",
+    "worker:dev": "wrangler dev --config next/worker/wrangler.jsonc",
+    "worker:deploy": "wrangler deploy --config next/worker/wrangler.jsonc"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260928.1",
+    "@types/node": "^22.20.4",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.142.0"
+  }
+}

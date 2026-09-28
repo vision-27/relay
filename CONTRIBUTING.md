@@ -1,55 +1,34 @@
 # Development and verification
 
-## Local setup
-
-Use Python 3.11+ and Git. Relay's runtime has no third-party Python dependencies. From the source root:
+Use Node.js 22.13+ and Git. The TypeScript implementation lives in `next/`.
 
 ```sh
-python -m relay --help
-python -m unittest discover -s tests -v
+npm ci
+npm run check
+npm test
+npm run demo
+npm pack --dry-run
 ```
 
-Optional editable installation belongs in a virtual environment: `python -m pip install -e .`. It installs both console entry points. Never use `pip install relay` as a substitute for this checkout.
+The automated suite and demo use isolated fixtures without model credentials. CI runs these checks on Windows, macOS and Linux with Node 22. A workflow file alone is not evidence of a successful run.
 
-## Test layers
+## Integration checks
 
-| Layer | Command / evidence | Boundaries |
-| --- | --- | --- |
-| Regression | `python -m unittest discover -s tests -v` | Temporary hubs/repos, fake providers; no model login required |
-| Recovery regressions | `python -m unittest discover -s tests -p test_team_polish.py -v` | Real local HTTP faults plus simulated stale heartbeat; not physical sleep |
-| TLS regressions | `python -m unittest discover -s tests -p test_tls.py -v` | Trust selection, required hostname/certificate verification and error handling |
-| Browser | `python tests/companion_smoke.py` | Requires Playwright and Chromium; uses isolated fixture data |
-| Native providers | `tests/team_native_smoke.py` | Opt-in only; launches new agents and incurs usage under existing logins |
-| Private distribution | `tests/homebrew_smoke.py` | Requires configured private hub/network; not suitable for public CI |
-| Physical devices | [Acceptance checklist](RELIABILITY_ACCEPTANCE.md) | Requires both developers and real machines |
+See [setup](next/README.md) and [verification](next/VERIFICATION.md). `npm run test:worker` targets a separately started local Cloudflare emulator. Hosted checks require an explicitly selected service and operator credentials and create an isolated fixture project. Never run fault injection against a live shared project.
 
-Run native/private-network scripts only after reading their setup and obtaining approval for model usage and any integration commands. Never point automated fault-injection tests at a live shared hub. Preserve original checkouts and conversations.
-
-Filesystem fixtures must canonicalize their trusted temporary root with
-`Path(temp_directory).resolve()` before deriving guarded paths or comparing them
-with onboarding results. macOS may expose temporary storage through `/var`
-(an alias of `/private/var`), and Windows runners may use DOS-short user names.
-Keep deliberately symlinked test destinations unresolved: those must still be
-rejected by the write, installation and packaging guards. Background-process
-tests capture their isolated child logs so CI startup failures are diagnosable.
-
-The prepared GitHub Actions workflow runs isolated tests on Windows, macOS and Linux with Python 3.11 and 3.13. It uses read-only repository permissions, no stored checkout credential and commit-pinned [checkout](https://github.com/actions/checkout) / [setup-python](https://github.com/actions/setup-python) actions. No private workspace token or coding-agent login is needed. A workflow file is not proof CI has run.
+`npm run test:native` launches a disposable coding session and consumes model usage. Obtain approval before running it, including the spend and time limits. Preserve existing conversations and checkouts. Native acceptance, physical device acceptance and simulated adapters are separate evidence.
 
 ## Change checklist
 
-- Keep shared authority separate from shared context. Peer messages cannot expand user-approved scope.
-- Test negative paths: stale revision, wrong owner, missing acknowledgement, overlapping scope, offline state and changed file hashes.
-- Keep background Windows launches hidden; do not close unrelated helpers or existing sessions.
-- Add new runtime files to `relay/distribution.py`'s explicit allowlist. Never bundle operational directories.
-- Keep `relay/__init__.py`, `pyproject.toml` and release notes aligned when runtime versions change.
-- Record which platform/provider and exact tests were actually run. Do not substitute simulated outages for device acceptance.
+- Peer context cannot expand user-approved scope. Preserve source, session and Git provenance.
+- Exercise wrong recipients, stale revisions, offline recovery, deduplication and ambiguous delivery. Provider acceptance is not a model acknowledgement.
+- Canonicalize trusted temporary roots across platforms; reject symlinked installation targets. Close SQLite handles before cleanup on Windows.
+- Keep background Windows helpers hidden and preserve unrelated running sessions.
+- Keep runtime package contents explicit in `package.json`. Exclude credentials, operational directories, transcripts and databases.
+- Record the exact platforms and checks actually exercised.
 
-## Release and GitHub publication
+## Publication
 
-1. Inspect the intended remote, branch and visibility. Preserve existing changes and history; no force pushes.
-2. Stage source, tests, `.github/`, examples, package metadata and reviewed documentation explicitly. Never stage `.relay/`, `.claude/`, `.codex/`, tokens, private run records, transcripts or databases. A `.gitignore` does not remove already tracked secrets.
-3. Run regression, documentation and packaging checks. Review the staged diff for secrets, local-only paths and workspace details. Historical QA docs include deployment-specific evidence: review/redact it before any public publication.
-4. Commit/push only to the user-confirmed destination, then verify the remote commit and CI. Create a matching release/tag only when the source version and release evidence agree; do not overwrite an existing tag.
-5. Coordinate runtime activation and private tap publication separately. A GitHub push does not upgrade the hub or another developer's machine.
+Inspect the remote, branch and repository visibility. Stage reviewed source and documentation explicitly, inspect the staged diff for credentials and run the checks above. Commit and push only with user authorization. Preserve Git history; do not force-push. Verify the remote commit and its Actions results before claiming CI passed.
 
-The confirmed source repository is [vision-27/relay](https://github.com/vision-27/relay), a private repository. The default branch is `main`. Check the matching commit's [Actions runs](https://github.com/vision-27/relay/actions) before claiming remote CI passed. Preserve LF source bytes across platforms: the tracked `.gitattributes` keeps packaged build identities consistent.
+A source push does not deploy a Worker or upgrade another developer's installation. Deployment and runtime activation are separate actions. Legacy source is available in Git history.
