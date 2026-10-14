@@ -42,9 +42,27 @@ For a release, update `package.json`, its lockfile, `next/core/version.ts`, the
 README/setup commands, and `.github/RELEASE_NOTES.md` together. Push an annotated
 `vVERSION` tag only after review. The release workflow requires the Windows,
 macOS, and Linux checks before creating a GitHub prerelease and attaching builds.
-Release creation preserves the repository's visibility. The npm registry is not
-configured for publishing; the package remains `private: true` to prevent an
-accidental registry release. No open-source license is granted by packaging it.
+Release creation preserves the repository's visibility. The runtime package is
+configured for public npm publication under the `beta` tag; GitHub releases do
+not automatically publish it to npm. No open-source license is granted by packaging it.
+
+### First npm publication
+
+The maintainer signs in once with `npm login`. Confirm `npm whoami` and ownership
+of the package's npm scope before publishing; the current scope is
+`@relay-workspace`. Change the package name, lockfile root name, and guide commands
+together if publishing under a different account. Never commit an npm token.
+
+Run `npm publish --dry-run --access public --tag beta` to inspect the public file list, then
+`npm publish --access public --tag beta`. The `prepublishOnly` gate checks both
+TypeScript targets and builds the strict allowlisted archive. npm may require
+the maintainer's authentication confirmation during publication.
+
+After the registry confirms publication, verify a fresh install and switch the
+user guides to `npm install --global @relay-workspace/cli@beta` followed by
+`relay setup`. The shorter one-time setup is
+`npx --yes @relay-workspace/cli@beta setup`; setup retains its runtime outside
+the npm cache. These commands are not available until the first publication.
 
 Inspect the remote, branch and repository visibility. Stage reviewed source and documentation explicitly, inspect the staged diff for credentials and run the checks above. Commit and push only with user authorization. Preserve Git history; do not force-push. Verify the remote commit and its Actions results before claiming CI passed.
 

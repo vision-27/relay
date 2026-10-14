@@ -1,7 +1,11 @@
 {
   "name": "@relay-workspace/cli",
   "version": "0.8.0-alpha.10",
-  "private": true,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "beta"
+  },
   "description": "Shared context for the coding sessions you already use.",
   "type": "module",
   "engines": {
@@ -37,7 +41,8 @@
     "prepack": "npm run build",
     "worker:dev": "wrangler dev --config next/worker/wrangler.jsonc",
     "worker:deploy": "wrangler deploy --config next/worker/wrangler.jsonc",
-    "package:release": "npm run build && node out/tests/package-release.js"
+    "package:release": "npm run build && node out/tests/package-release.js",
+    "prepublishOnly": "npm run check && npm run package:release"
   },
   "dependencies": {
     "ws": "^8.18.3"
@@ -52,7 +57,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vision-27/relay.git"
+    "url": "git+https://github.com/vision-27/relay.git"
   },
   "homepage": "https://github.com/vision-27/relay#readme",
   "bugs": {
