@@ -36,6 +36,8 @@ try{
  await until(()=>!!store.read(nativeId),60000);report.registered=true;
  await until(()=>results>=1||claude.exitCode!==null,60000);if(claude.exitCode!==null)throw Error('Claude exited before idle verification');report.initialResponse=true;
  const state=store.read(nativeId);await until(()=>store.read(nativeId)?.mode==='idle',15000);
+ // Delivery must survive an idle period beyond the old 30-second hook timeout.
+ await wait(95000);
  const question=crypto.randomUUID();await post('dashboard',owner.token,{operation:'send',targetSessionId:state.session_id,requestId:question,text:'Integration test: reply with RELAY_NATIVE_IDLE_OK using relay_reply.'});
  await until(async()=>{const data=await post('dashboard',owner.token,{operation:'read',after:0});return data.events.some(e=>e.replyTo===question&&e.text.includes('RELAY_NATIVE_IDLE_OK'));},60000);report.idleReply=true;
  await until(()=>store.read(nativeId)?.mode==='idle',15000);

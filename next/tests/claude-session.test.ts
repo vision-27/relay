@@ -43,6 +43,24 @@ test('server recovery keeps Claude inbox identity and cannot collide with a Code
   const codex=await call('codex'),claude=await call('claude'),recovered=await call('claude');
   assert.notEqual(codex.session_id,claude.session_id);assert.equal(claude.session_id,recovered.session_id);
 });
+test('Claude reattachment reports backend rejection instead of returning a false successful session',async t=>{
+  const {store}=await fixture(t),state=await store.ensure('native-rejected');
+  const proxy=new ClaudeSessionMcp(store,process.pid,'native-rejected');
+  const response=await proxy.handle({jsonrpc:'2.0',id:42,method:'tools/call',params:{name:'relay_open',arguments:{provider:'claude',task:'x'.repeat(1001)}}});
+  assert.equal(response.result.isError,true);
+  assert.equal(response.id,42);
+  assert.ok(!JSON.stringify(response).includes(state.session_key),'A rejected request must not advertise attachment success');
+});
+test('Claude reattachment preserves pending messages returned by its backend check',async t=>{
+  const {store,room}=await fixture(t),recipient=await store.ensure('recipient'),sender=await store.ensure('sender');
+  const member=await room.authenticate(store.connection.token),id=crypto.randomUUID();
+  await room.append(member,{id,sessionId:sender.session_id,targetSessionId:recipient.session_id,kind:'question',text:'Keep this pending question visible',paths:[]});
+  const proxy=new ClaudeSessionMcp(store,process.pid,'recipient');
+  const response=await proxy.handle({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'relay_open',arguments:{provider:'claude',task:'Resume'}}});
+  const data=JSON.parse(response.result.content[0].text);
+  assert.equal(data.session_id,recipient.session_id);assert.equal(data.inbox.messages[0].id,id);
+  assert.equal(room.receipts().find(r=>r.eventId===id)?.state,'accepted');
+});
 test('stale Stop cannot replace a newer busy turn and SessionEnd stops the listener',async t=>{
   const {store}=await fixture(t);
   await claudeSessionHook(store,{session_id:'a',hook_event_name:'UserPromptSubmit',prompt_id:'new-prompt'},process.pid);

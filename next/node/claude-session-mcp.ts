@@ -20,8 +20,11 @@ export class ClaudeSessionMcp {
       const state=await this.store.ensure(nativeId,name==='relay_open');
       if(state.closed)throw Error('Relay is closed for this conversation');
       if(name==='relay_open'){
-        if(args.task)await this.store.rpc({jsonrpc:'2.0',id:input.id,method:'tools/call',params:{name:'relay_check',arguments:{session_key:state.session_key,task:args.task}}});
-        return {jsonrpc:'2.0',id:input.id,result:{content:[{type:'text',text:JSON.stringify({session_id:state.session_id,session_key:state.session_key,instructions:sessionContext(state)})}]}};
+        const checked=await this.store.rpc({jsonrpc:'2.0',id:input.id,method:'tools/call',params:{name:'relay_check',arguments:{session_key:state.session_key,...(args.task!==undefined?{task:args.task}:{})}}});
+        if(checked?.error||checked?.result?.isError)return checked;
+        const data=JSON.parse(checked.result.content.find((item:any)=>item.type==='text').text);
+        // The check supplied pending messages: preserve them in the model's response.
+        return {jsonrpc:'2.0',id:input.id,result:{content:[{type:'text',text:JSON.stringify({session_id:state.session_id,session_key:state.session_key,instructions:sessionContext(state),inbox:data.inbox})}]}};
       }
       if(args.session_key!==state.session_key)throw Error('Use this conversation\'s own Relay key');
       const response=await this.store.rpc(input);

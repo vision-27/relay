@@ -1,5 +1,13 @@
 # Relay Next verification
 
+## Idle delivery repair 0.8.0-alpha.14 - 14 October 2026
+
+- Reproduced alpha.13's failure with real Claude Code 2.1.299: after a 45-second idle wait, the Stop listener had been terminated at 30 seconds (exit 143), and the incoming question received no reply. The earlier immediate-idle acceptance test did not exercise this boundary.
+- With the longer background-hook timeout, real Claude answered a message after 95 seconds idle and then answered a busy-turn message after completing its task. Ordinary session startup, unrelated working directory, and no channel flags were retained. The reproducible native test now includes the 95-second wait.
+- Added regressions for returning backend rejection instead of false attachment success and preserving pending messages in the attachment response. Node/Worker typechecks and all 108 applicable local tests passed; one POSIX-only test was skipped on Windows.
+- Wake hooks have a seven-day continuous-idle timeout, bounded below the native millisecond timer limit. Normal turns replace the listener; session end, process exit, and busy turns cancel it. The change does not grant tool permissions or read transcripts.
+- Local Worker integration, release CI, device upgrade, and npm publication are pending. The hosted alpha.13 server is compatible; no server logic change is required. Physical two-device acceptance remains unverified.
+
 ## Native Claude session integration 0.8.0-alpha.13 - 14 October 2026
 
 - Windows local checks: Node/Worker typechecks and 106 tests passed (one POSIX launcher test skipped). Local Worker integration verified native idle wake-up, messages held during busy turns, unrelated-conversation isolation, listener cancellation, existing channel compatibility, and the existing shared-budget tests.

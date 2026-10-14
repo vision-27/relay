@@ -38,6 +38,11 @@ test('remote setup connects both clients without Git and survives a repeat insta
   assert.match(claude.mcpServers.relay_remote.args[0],/claude-session-mcp/);
   const claudeSettings=JSON.parse(readFileSync(join(home,'.claude','settings.json'),'utf8'));
   assert.equal(claudeSettings.permissions.defaultMode,'default');assert.equal(claudeSettings.hooks.Stop.length,2);assert.equal(claudeSettings.hooks.Stop[1].hooks[0].asyncRewake,true);
+  for(const event of ['SessionStart','Stop']){
+    const listener=claudeSettings.hooks[event].flatMap((group:any)=>group.hooks).find((hook:any)=>hook.asyncRewake);
+    assert.ok(listener.timeout>=86400,'Idle wake listeners must survive a normal full-day session');
+    assert.ok(listener.timeout*1000<=2147483647,'The native timer must not overflow');
+  }
   assert.doesNotMatch(JSON.stringify(claudeSettings),/fixture-private-token|dangerously|transcript|cwd/);
   await setupRemote({dir:state,invite:invitation,name:'Friend',provider:'both'},resolve('out/node/cli.js'),undefined,environment);
   assert.equal(calls,1);assert.equal(JSON.parse(readFileSync(join(home,'.codex','hooks.json'),'utf8')).hooks.Stop.length,2);

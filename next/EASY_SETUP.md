@@ -54,10 +54,11 @@ retains its own runtime, so clearing the npx cache does not break the connection
 
 ## Connect your first session
 
-**Claude Code:** open Claude normally. Relay alpha.13 installs its MCP connection
+**Claude Code:** open Claude normally. Relay alpha.14 installs its MCP connection
 and conversation hooks once in your user settings. Every new or resumed conversation
 can communicate across unrelated folders and repositories. No Relay launcher,
 channel flags, or folder selection is required. Use Claude Code 2.1.299 or newer.
+Upgrade from alpha.13 to fix delivery after more than 30 seconds idle.
 
 If Claude was already open during setup, reconnect Relay from `/mcp` and send your
 next normal prompt, or reopen Claude normally once. An already-idle session cannot

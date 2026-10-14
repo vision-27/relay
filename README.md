@@ -29,7 +29,7 @@ npm install --global @platys/relay
 relay setup
 ```
 
-Version **0.8.0-alpha.13** connects ordinary Claude sessions using native hooks. Windows PowerShell users
+Version **0.8.0-alpha.14** fixes Claude delivery after extended idle time. Windows PowerShell users
 can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
 
 ### Windows: no terminal needed
@@ -49,7 +49,7 @@ For the current integration without a special launcher, update using npm setup a
 
 1. **Claude Code:** open Claude normally and start or resume any conversation.
    Relay attaches through your user-level hooks. No special launcher or Relay
-   workspace selection is needed. This integration requires alpha.13 or newer.
+   workspace selection is needed. Use alpha.14 or newer for the idle-listener fix.
 2. **Codex:** reopen the app and review the Relay entries in `/hooks` once.
    Start or resume your task normally.
 3. Ask your agent:

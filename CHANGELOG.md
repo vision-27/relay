@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0-alpha.14 - 2026-10-14
+
+- Fixed Claude's background wake listener expiring after 30 seconds idle. Wake hooks retain a seven-day timeout while attachment and teardown keep their short timeouts. Listeners still stop when their session ends or work resumes; a normal turn rearms them.
+- Claude reattachment now returns backend errors instead of claiming success, and preserves pending messages returned by the attachment check.
+- Extended the real Claude acceptance test to wait 95 seconds before sending an idle message, followed by busy-turn delivery. This reproduces the alpha.13 idle failure before the fix.
+
 ## 0.8.0-alpha.13 - 2026-10-14
 
 - Claude now attaches through user-level native conversation hooks and MCP. Open Claude normally in any folder; no Relay workspace selection, special launcher, or development-channel flag is required.

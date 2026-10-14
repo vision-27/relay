@@ -14,7 +14,7 @@ you selected the intended conversation, especially if your friend has several.
 
 For automatic delivery:
 
-- **Claude:** with Relay alpha.13 and Claude Code 2.1.299 or newer, open Claude
+- **Claude:** with Relay alpha.14 and Claude Code 2.1.299 or newer, open Claude
   normally. Check `/hooks` for Relay's user-level session hooks and `/mcp` for
   `relay_remote`. After updating an existing session, reconnect the MCP server
   and send a normal prompt, or reopen Claude once. Disabled hooks prevent wake-up.
@@ -23,6 +23,11 @@ For automatic delivery:
 
 If the agent is busy, let it finish. `Accepted` only confirms transport; an
 actual answer appears as `Answered`. A closed client cannot respond.
+
+Alpha.13 had a 30-second idle-listener timeout. Update with
+`npx --yes @platys/relay@latest setup` and reopen Claude once. The corrected
+listener lasts up to seven uninterrupted idle days and is replaced at normal
+turn boundaries. After that idle limit, send a normal prompt to rearm it.
 
 ## Claude says channels are blocked
 
