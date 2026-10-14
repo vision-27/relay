@@ -1,5 +1,13 @@
 # Relay Next verification
 
+## Public npm installation 0.8.0-alpha.11 - 14 October 2026
+
+- Published `@platys/relay@0.8.0-alpha.11` publicly under the `latest` tag after the npm maintainer completed publishing authentication. The package is available without GitHub access or an npm account; the existing desktop alpha.10 GitHub download remains separate.
+- Node/Worker type checks, all 102 local tests, and isolated packaged setup for both clients passed. The runtime accepts the new package name and the prior archive identity for upgrades. Temporary test cleanup now tolerates short Windows file locks while retaining canonical target checks.
+- [The publication branch CI](https://github.com/vision-27/relay/actions/runs/38521218521) passed on Windows, macOS, and Linux, including package installation and desktop launcher smoke checks. Physical multi-device agent acceptance remains separate.
+- Verified anonymous registry metadata, a global install into a temporary prefix, npx CLI execution, and the installed setup page over HTTP. The probe used separate empty user/global npm configuration files and a fresh cache, with authentication environment variables removed. No real client configuration or membership was changed by this verification.
+- Commands: `npx --yes @platys/relay setup`, or `npm install --global @platys/relay` followed by `relay setup`. The published archive includes the user guides and compiled runtime only. No hosted Worker deployment occurred.
+
 ## Packaged beta 0.8.0-alpha.10 - 14 October 2026
 
 - `relay setup` now defaults to the hosted MCP browser setup. Explicit `--legacy-network`, legacy invitation codes, and operator `--server` setup retain the older connector path. Updated legacy regression tests select that mode explicitly.
