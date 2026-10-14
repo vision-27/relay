@@ -37,6 +37,9 @@ export class ClaudeChannel {
     this.base=origin.origin+'/projects/'+connection.projectId;
   }
   stop(){this.stopped=true;clearTimeout(this.timer);clearTimeout(this.retry);clearInterval(this.heartbeat);clearInterval(this.fallback);this.socket?.terminate();}
+  get closed(){return this.stopped;}
+  /** Used by the native background hook; notifications wake only its owning conversation. */
+  watchSession(id:string,key:string){this.initialized=true;this.attach(id,key);}
   private async post(route:string,input:any){
     this.budget.assertAllowed(this.connection.server);
     const response=await this.request(this.base+'/'+route,{method:'POST',headers:{Authorization:'Bearer '+this.connection.token,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify(input),signal:AbortSignal.timeout(15000)});
@@ -80,7 +83,7 @@ export class ClaudeChannel {
   private attach(id:string,key:string){
     this.session={id,key};this.connect();
     this.heartbeat=setInterval(()=>{if(this.socket?.readyState===WebSocket.OPEN){if(Date.now()-this.lastPong>60000)this.socket.terminate();else this.socket.send('ping');}},20000);
-    this.fallback=setInterval(()=>this.schedule(true),30000);
+    this.fallback=setInterval(()=>this.schedule(true),300000);
   }
   private connect(){
     if(this.stopped)return;

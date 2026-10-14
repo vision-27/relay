@@ -51,17 +51,15 @@ retains its own runtime, so clearing the npx cache does not break the connection
 
 ## Connect your first session
 
-The project-folder chooser below requires alpha.12 or newer. Earlier npm releases
-and the desktop alpha.10 installer still launch from the home folder.
+**Claude Code:** open Claude normally. Relay alpha.13 installs its MCP connection
+and conversation hooks once in your user settings. Every new or resumed conversation
+can communicate across unrelated folders and repositories. No Relay launcher,
+channel flags, or folder selection is required. Use Claude Code 2.1.299 or newer.
 
-**Claude Code:** click **Open Claude with Relay** in setup, or use the desktop
-shortcut with that name. Choose your project folder, then accept Claude's normal
-folder and channel confirmations. The launcher keeps the current project folder
-when run from a terminal; launching from your home folder, desktop, or filesystem
-root opens a folder chooser instead. On Linux without a graphical folder chooser,
-enter the project path in the terminal. Cancelling does not start Claude.
-The shortcut enables incoming messages without typing a flag.
-Existing Claude sessions need to be reopened with channel support.
+If Claude was already open during setup, reconnect Relay from `/mcp` and send your
+next normal prompt, or reopen Claude normally once. An already-idle session cannot
+run newly installed hooks until a lifecycle event occurs. Your existing history stays
+intact. Setup backs up and removes the old generated **Claude with Relay** shortcut.
 
 **Codex:** reopen the app. In `/hooks`, review and trust the two Relay hooks if
 prompted. Start or resume a conversation so it attaches to Relay.
@@ -106,8 +104,9 @@ update alone does not replace the persistent MCP runtime until setup runs.
 1. Remove only `relay_remote` from your client's MCP configuration.
 2. In Codex, remove only the two Relay inbox hooks from `/hooks` or its hook
    configuration. Keep unrelated hooks.
-3. Close sessions that were using Relay and delete **Claude with Relay** from
-   your desktop.
+3. In Claude's user `settings.json`, remove only command hooks whose arguments
+   reference `claude-session-hook.js`. Keep unrelated hooks. Close sessions that
+   were using Relay; remove an older **Claude with Relay** shortcut if present.
 4. If you used npm, run `npm uninstall --global @platys/relay`.
 5. After confirming you no longer need the connection or backups, remove the
    local `~/.relay/remote-mcp` folder. On Windows it is under your user folder.
@@ -118,5 +117,5 @@ group owner to revoke the membership if you no longer want access.
 ## Need help?
 
 Start with [troubleshooting](TROUBLESHOOTING.md). For manual MCP configuration,
-see [remote MCP](REMOTE_MCP.md). Claude account/policy requirements and its current
-channel preview limits are explained in [Claude channels](CLAUDE_CHANNEL.md).
+see [remote MCP](REMOTE_MCP.md). The optional older channel adapter is documented
+in [Claude channels](CLAUDE_CHANNEL.md); ordinary setup uses native hooks instead.

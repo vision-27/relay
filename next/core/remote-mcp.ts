@@ -31,7 +31,8 @@ export class RemoteMcp {
     sql.exec('CREATE TABLE IF NOT EXISTS mcp_hook_supplied (session_id TEXT NOT NULL, event_id TEXT NOT NULL, supplied_at INTEGER NOT NULL, PRIMARY KEY(session_id,event_id))');
   }
   private bind(member:Member,session:Session,sourceId:string){
-    assert(session.provider==='codex',400,'Native MCP hooks currently support Codex');
+    // Preserve existing Codex bindings; namespace Claude IDs so providers cannot collide.
+    if(session.provider==='claude')sourceId='claude:'+sourceId;
     const existing=this.sql.all<{session_id:string}>('SELECT session_id FROM mcp_hook_bindings WHERE member_id=? AND source_id=?',member.id,sourceId)[0];
     assert(!existing||existing.session_id===session.id,409,'This native conversation is already attached to another Relay session');
     const previous=this.sql.all<{source_id:string}>('SELECT source_id FROM mcp_hook_bindings WHERE session_id=?',session.id)[0];
@@ -88,10 +89,10 @@ export class RemoteMcp {
     if(name==='relay_hook')return this.hook(member,args);
     if(name==='relay_open') {
       const sourceId=args.native_session_id as string|undefined;
-      if(sourceId)assert(args.provider==='codex',400,'Native MCP hooks currently support Codex');
+      const bindingId=sourceId&&args.provider==='claude'?'claude:'+sourceId:sourceId;
       const sessionKey='relay_session_'+secret(),keyHash=await hash(sessionKey);
       const session=this.sql.transaction(()=>{
-        const existing=sourceId?this.sql.all<{session_id:string}>('SELECT session_id FROM mcp_hook_bindings WHERE member_id=? AND source_id=?',member.id,sourceId)[0]:undefined;
+        const existing=bindingId?this.sql.all<{session_id:string}>('SELECT session_id FROM mcp_hook_bindings WHERE member_id=? AND source_id=?',member.id,bindingId)[0]:undefined;
         const previous=existing?this.room.own(member,existing.session_id):undefined;
         const sessionId=previous&&previous.state!=='closed'?previous.id:crypto.randomUUID();
         const created=this.room.register(member,{id:sessionId,memberId:member.id,provider:args.provider as 'codex'|'claude',sourceId:sessionId,name:member.name,task:args.task as string,scopes:[],state:'active',updatedAt:new Date().toISOString(),git:{repository:(args.workspace as string|undefined)??previous?.git.repository??'remote-session',head:null,branch:null,dirty:false,files:[],fingerprint:''}});

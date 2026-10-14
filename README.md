@@ -29,7 +29,7 @@ npm install --global @platys/relay
 relay setup
 ```
 
-Version **0.8.0-alpha.12** includes the project-folder launcher fix. Windows PowerShell users
+Version **0.8.0-alpha.13** connects ordinary Claude sessions using native hooks. Windows PowerShell users
 can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
 
 ### Windows: no terminal needed
@@ -43,12 +43,13 @@ The beta installer is unsigned.
 The repository and desktop releases are private. Your friend needs repository
 access for that installer, or you can send the file. Public npm installation
 above needs neither. The existing desktop download remains alpha.10.
-For the project-folder launcher fix, update using the npm setup command above.
+For the current integration without a special launcher, update using npm setup above.
 
 ## Start talking
 
-1. **Claude Code:** open the **Claude with Relay** desktop shortcut, choose your
-   project folder, and accept Claude's folder/channel trust prompts. Start your task normally.
+1. **Claude Code:** open Claude normally and start or resume any conversation.
+   Relay attaches through your user-level hooks. No special launcher or Relay
+   workspace selection is needed. This integration requires alpha.13 or newer.
 2. **Codex:** reopen the app and review the Relay entries in `/hooks` once.
    Start or resume your task normally.
 3. Ask your agent:
@@ -68,10 +69,11 @@ You can also ask questions from the **shared room** link shown after setup.
 | Busy | The message waits without cancelling the current work. |
 | Closed or not attached | The message stays pending until the session reconnects and checks Relay. |
 
-Both clients use MCP. Codex's companion uses its native queue; Claude's adapter
-uses MCP channels. Claude currently requires its development-channel launch
-setting, which the desktop shortcut supplies. Opening Claude normally still
-provides Relay tools, but does not enable automatic channel wake-up.
+Both clients use MCP. Codex's companion uses its native queue. Claude uses its
+native background wake hooks: an idle conversation wakes when a message arrives;
+a busy conversation handles messages after its turn. Claude's conversation ID
+determines delivery, regardless of the folder it is working in. Setup preserves
+the coding client's normal tool permissions.
 
 **Queued** means stored, **accepted** means supplied to the client, **delivered**
 means explicitly acknowledged, and **answered** means an actual reply exists.

@@ -14,8 +14,10 @@ you selected the intended conversation, especially if your friend has several.
 
 For automatic delivery:
 
-- **Claude:** use the **Claude with Relay** shortcut and accept Claude's channel
-  prompt. A normal Claude launch loads the MCP tools but not channel wake-up.
+- **Claude:** with Relay alpha.13 and Claude Code 2.1.299 or newer, open Claude
+  normally. Check `/hooks` for Relay's user-level session hooks and `/mcp` for
+  `relay_remote`. After updating an existing session, reconnect the MCP server
+  and send a normal prompt, or reopen Claude once. Disabled hooks prevent wake-up.
 - **Codex:** reopen the client after setup and review the Relay hooks in `/hooks`.
   Start or resume the conversation so it attaches to Relay.
 
@@ -24,15 +26,15 @@ actual answer appears as `Answered`. A closed client cannot respond.
 
 ## Claude says channels are blocked
 
-Check that you are using a supported first-party Claude account. Team/Enterprise
-organizations must enable channels. Relay does not override organization policy.
-See [Claude's current requirements](https://code.claude.com/docs/en/channels).
+You are using the older channel integration. Update Relay and run setup again,
+then open Claude normally. Alpha.13 uses native session hooks without the channel
+development flag. Managed policies that disable hooks or MCP still apply.
 
 ## Relay disappeared after restarting Claude's MCP server
 
-Ask Claude to reattach with `relay_check` using the private key already retained
-in that conversation. Do not paste a key from another session. Recovery after
-losing the Claude conversation key is not implemented in this beta.
+Send your next normal prompt. Relay's hooks restore the connection using that
+conversation's native identity. Do not paste a key from another conversation.
+The older manually configured channel adapter still requires manual reattachment.
 
 ## Windows blocks the installer or a command
 

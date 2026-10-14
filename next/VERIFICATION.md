@@ -1,5 +1,12 @@
 # Relay Next verification
 
+## Native Claude session integration 0.8.0-alpha.13 - 14 October 2026
+
+- Windows local checks: Node/Worker typechecks and 106 tests passed (one POSIX launcher test skipped). Local Worker integration verified native idle wake-up, messages held during busy turns, unrelated-conversation isolation, listener cancellation, existing channel compatibility, and the existing shared-budget tests.
+- A real Claude Code 2.1.299 process, using the installed login and an isolated local Worker, automatically registered and answered an idle message without channel flags or a special launcher. A second message sent during work was answered after the requested work completed. No existing peer conversations were used. The opt-in reproducer is `npm run test:claude-native`, with a $0.50 model budget.
+- Source tests cover concurrent attachment, native-ID recovery, provider separation, `/clear` transport rebinding, stale Stop rejection, normal permissions, and preserving unrelated hooks. No workspace or transcript content is used to identify a conversation.
+- Cross-platform CI, hosted rollout, local installation upgrade, and public npm publication are pending for this version. Interactive GUI and physical two-device acceptance remain unverified.
+
 ## Project-folder launcher 0.8.0-alpha.12 - 14 October 2026
 
 - Windows local checks passed: Node/Worker typechecks, 103 tests (one POSIX-only test skipped), strict release packaging, and isolated package setup for Claude and Codex.

@@ -1,6 +1,6 @@
 {
   "name": "@platys/relay",
-  "version": "0.8.0-alpha.12",
+  "version": "0.8.0-alpha.13",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",
@@ -38,6 +38,7 @@
     "build:desktop": "npm run build && node out/tests/build-desktop.js",
     "test:hosted": "npm run build && node out/tests/hosted-smoke.js",
     "test:native": "npm run build && node out/tests/native-smoke.js",
+    "test:claude-native": "npm run build && node next/tests/claude-session-native-smoke.mjs",
     "prepack": "npm run build",
     "worker:dev": "wrangler dev --config next/worker/wrangler.jsonc",
     "worker:deploy": "wrangler deploy --config next/worker/wrangler.jsonc",

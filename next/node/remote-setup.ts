@@ -1,10 +1,11 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { Provider } from '../core/types.js';
 import { mergeCodexRemoteHooks } from '../core/remote-hooks.js';
+import { mergeClaudeSessionHooks } from '../core/claude-hooks.js';
 import { companionConfig } from './remote-companion-install.js';
 import { assertRealPath, installRuntime, runtimeNode } from './network-runtime.js';
 import { detectClients, type SetupIO } from './network-setup.js';
@@ -111,15 +112,18 @@ export async function setupRemote(values:Options,cli:string,io?:SetupIO,environm
   if(!providers.length)throw Error('Install Claude Code or Codex first, then reopen Relay setup.');
   const codexHome=env.CODEX_HOME??join(home,'.codex'),claudeHome=env.CLAUDE_CONFIG_DIR;
   const codexPath=join(codexHome,'config.toml'),hooksPath=join(codexHome,'hooks.json'),claudePath=join(claudeHome??home,'.claude.json');
-  const paths=providers.flatMap(p=>p==='codex'?[codexPath,hooksPath]:[claudePath]);
+  const claudeSettingsPath=join(claudeHome??join(home,'.claude'),'settings.json');
+  const paths=providers.flatMap(p=>p==='codex'?[codexPath,hooksPath]:[claudePath,claudeSettingsPath]);
   for(const path of paths)assertRealPath(path);
   const originals=new Map(paths.map(path=>[path,read(path)]));
   const claude=providers.includes('claude')?JSON.parse(originals.get(claudePath)??'{}'):undefined;
+  const claudeSettings=providers.includes('claude')?JSON.parse(originals.get(claudeSettingsPath)??'{}'):undefined;
   const hooks=providers.includes('codex')?mergeCodexRemoteHooks(JSON.parse(originals.get(hooksPath)??'{}')):undefined;
   // Check all configs before redeeming a single-use invitation.
   if(claude){
     claude.mcpServers??={};const old=claude.mcpServers.relay_remote;
-    if(old&&!(old.url===`${server}/projects/${projectId}/mcp`||old.args?.some((x:unknown)=>typeof x==='string'&&/[\\/]claude-channel\.js$/.test(x))))throw Error('An unrelated relay_remote entry exists in Claude. It was kept.');
+    if(old&&!(old.url===`${server}/projects/${projectId}/mcp`||old.args?.some((x:unknown)=>typeof x==='string'&&/[\\/]claude-(channel|session-mcp)\.js$/.test(x))))throw Error('An unrelated relay_remote entry exists in Claude. It was kept.');
+    mergeClaudeSessionHooks(claudeSettings,'node','entry','connection');
   }
   const codexOriginal=originals.get(codexPath)??'';
   if(providers.includes('codex')&&/^\s*\[mcp_servers\.["']relay_remote["']/m.test(codexOriginal))throw Error('The existing quoted Relay configuration needs review before setup can replace it.');
@@ -133,14 +137,16 @@ export async function setupRemote(values:Options,cli:string,io?:SetupIO,environm
     if(!result.stdout.trim())throw Error('Windows could not locate your desktop. Reopen setup and try again.');
     desktop=result.stdout.trim();
   }
-  const launcher=providers.includes('claude')?join(desktop,platform==='win32'?'Claude with Relay.cmd':platform==='darwin'?'Claude with Relay.command':'Claude with Relay.sh'):undefined;
-  if(launcher)assertRealPath(launcher);
+  const oldLauncher=providers.includes('claude')?join(desktop,platform==='win32'?'Claude with Relay.cmd':platform==='darwin'?'Claude with Relay.command':'Claude with Relay.sh'):undefined;
+  if(oldLauncher)assertRealPath(oldLauncher);
   const installed=installRuntime(cli,dir),node=runtimeNode(installed);
   const updates:{path:string;text:string}[]=[];
-  if(claude){claude.mcpServers.relay_remote={type:'stdio',command:node,args:[join(dirname(installed),'claude-channel.js'),connectionPath]};updates.push({path:claudePath,text:JSON.stringify(claude,null,2)+'\n'});}
+  if(claude){
+    claude.mcpServers.relay_remote={type:'stdio',command:node,args:[join(dirname(installed),'claude-session-mcp.js'),connectionPath]};
+    updates.push({path:claudePath,text:JSON.stringify(claude,null,2)+'\n'},{path:claudeSettingsPath,text:JSON.stringify(mergeClaudeSessionHooks(claudeSettings,node,join(dirname(installed),'claude-session-hook.js'),connectionPath),null,2)+'\n'});
+  }
   if(hooks)updates.push({path:codexPath,text:companionConfig(codexSource,node,join(dirname(installed),'remote-companion-mcp.js'),connectionPath)},{path:hooksPath,text:JSON.stringify(hooks,null,2)+'\n'});
   for(const update of updates)mkdirSync(dirname(update.path),{recursive:true});
-  if(launcher)mkdirSync(dirname(launcher),{recursive:true});
   let connection=existing;
   if(!connection){
     const joined=await (environment.enroll??api)<{token:string;memberId:string}>(server,projectId,'','enroll',{code:invite!.code,name,repository:'remote-session'});
@@ -150,7 +156,9 @@ export async function setupRemote(values:Options,cli:string,io?:SetupIO,environm
   }
   for(const [path,original] of originals)if(read(path)!==original)throw Error('Your agent settings changed during setup. Press Connect again; your invitation has already been saved.');
   for(const update of updates)if(read(update.path)!==update.text)writeConfig(update.path,update.text,backup);
-  if(launcher){writeConfig(launcher,claudeLauncher(platform),backup);if(platform!=='win32')chmodSync(launcher,0o700);}
+  if(oldLauncher&&existsSync(oldLauncher)&&readFileSync(oldLauncher,'utf8').includes('--dangerously-load-development-channels')){
+    mkdirSync(backup,{recursive:true,mode:0o700});copyFileSync(oldLauncher,join(backup,'legacy-launcher-'+Date.now()+'.txt'));unlinkSync(oldLauncher);
+  }
   io?.log('Relay configured. Open your coding client and accept its own Relay trust prompts.');
-  return {dir,cli:installed,providers,remote:true,launcher,roomURL:server+'/app#'+encodeURIComponent(JSON.stringify({projectId,token:connection.token}))};
+  return {dir,cli:installed,providers,remote:true,launcher:undefined as string|undefined,roomURL:server+'/app#'+encodeURIComponent(JSON.stringify({projectId,token:connection.token}))};
 }

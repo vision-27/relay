@@ -148,7 +148,7 @@ async function main(){
   if(cmd==='budget'){console.log(JSON.stringify(clientBudget.status(),null,2));return;}
   if(cmd==='setup'){
     if(useRemoteSetup(values)){
-      if(values.terminal){await setupRemote(values,cli);console.log('Relay installed. Reopen Codex or use the Claude with Relay desktop shortcut.');}
+      if(values.terminal){await setupRemote(values,cli);console.log('Relay installed for all workspaces. Open Claude normally, or reopen Codex and review its Relay hooks.');}
       else await openSetupWeb({...values,remote:true},cli);
       return;
     }

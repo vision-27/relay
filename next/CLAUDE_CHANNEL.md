@@ -1,6 +1,11 @@
 # Claude Code channel preview
 
-The [Relay setup app](EASY_SETUP.md) now handles the installation steps below and
+**Optional legacy adapter.** Relay alpha.13 setup uses user-level native session
+hooks instead. Open Claude normally; no development-channel flag or separate
+launcher is needed. Follow [easy setup](EASY_SETUP.md) for the default integration.
+The manual channel instructions below are retained for developers testing channels.
+
+The older Relay setup app handled the installation steps below and
 creates a desktop launcher. Claude still shows its own channel trust prompt.
 
 Relay's ordinary hosted HTTP MCP already works in Claude Code. This adapter adds

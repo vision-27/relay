@@ -24,6 +24,8 @@ test('remote setup connects both clients without Git and survives a repeat insta
   writeFileSync(join(home,'.codex','config.toml'),'model = "keep-me"\n[mcp_servers.other]\nurl = "https://other.example"\n');
   writeFileSync(join(home,'.codex','hooks.json'),JSON.stringify({hooks:{Stop:[{hooks:[{type:'command',command:'keep-me'}]}]}}));
   writeFileSync(join(home,'.claude.json'),JSON.stringify({theme:'dark',mcpServers:{other:{command:'keep-me'}}}));
+  mkdirSync(join(home,'.claude'));writeFileSync(join(home,'.claude','settings.json'),JSON.stringify({permissions:{defaultMode:'default'},hooks:{Stop:[{hooks:[{type:'command',command:'keep-claude-hook'}]}]}}));
+  mkdirSync(join(home,'Desktop'));writeFileSync(join(home,'Desktop','Claude with Relay.cmd'),claudeLauncher('win32'));
   let calls=0;
   const environment={home,env:{},platform:'win32' as const,enroll:async()=>{calls++;return {token:'fixture-private-token',memberId:'member'} as any;}};
   const result=await setupRemote({dir:state,invite:invitation,name:'Friend',provider:'both'},resolve('out/node/cli.js'),undefined,environment);
@@ -32,10 +34,14 @@ test('remote setup connects both clients without Git and survives a repeat insta
   assert.match(codex,/keep-me/);assert.match(codex,/remote-companion-mcp/);assert.doesNotMatch(codex,/fixture-private-token/);
   assert.equal(claude.theme,'dark');assert.equal(claude.mcpServers.other.command,'keep-me');assert.ok(existsSync(claude.mcpServers.relay_remote.args[0]));
   const hooks=JSON.parse(readFileSync(join(home,'.codex','hooks.json'),'utf8'));assert.equal(hooks.hooks.Stop.length,2);
-  assert.match(readFileSync(result.launcher!,'utf8'),/--dangerously-load-development-channels/);assert.doesNotMatch(readFileSync(result.launcher!,'utf8'),/bypassPermissions|skip-permissions|fixture-private-token/);
-  assert.doesNotMatch(windowsClaudeLauncherScript(),/bypassPermissions|skip-permissions|fixture-private-token/);
+  assert.equal(result.launcher,undefined);assert.equal(existsSync(join(home,'Desktop','Claude with Relay.cmd')),false);
+  assert.match(claude.mcpServers.relay_remote.args[0],/claude-session-mcp/);
+  const claudeSettings=JSON.parse(readFileSync(join(home,'.claude','settings.json'),'utf8'));
+  assert.equal(claudeSettings.permissions.defaultMode,'default');assert.equal(claudeSettings.hooks.Stop.length,2);assert.equal(claudeSettings.hooks.Stop[1].hooks[0].asyncRewake,true);
+  assert.doesNotMatch(JSON.stringify(claudeSettings),/fixture-private-token|dangerously|transcript|cwd/);
   await setupRemote({dir:state,invite:invitation,name:'Friend',provider:'both'},resolve('out/node/cli.js'),undefined,environment);
   assert.equal(calls,1);assert.equal(JSON.parse(readFileSync(join(home,'.codex','hooks.json'),'utf8')).hooks.Stop.length,2);
+  assert.equal(JSON.parse(readFileSync(join(home,'.claude','settings.json'),'utf8')).hooks.Stop.length,2);
 });
 
 test('remote setup preflights all configs before consuming an invite and retains saved enrollment after a later conflict',async t=>{
