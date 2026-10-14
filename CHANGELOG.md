@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0-alpha.13 - Unreleased
+## 0.8.0-alpha.13 - 2026-10-14
 
 - Claude now attaches through user-level native conversation hooks and MCP. Open Claude normally in any folder; no Relay workspace selection, special launcher, or development-channel flag is required.
 - Native background hooks wake idle conversations and leave busy turns to finish. Conversation identity survives changing folders and resuming; separate native sessions and providers keep separate inboxes. A local per-session key cache prevents duplicate registration.

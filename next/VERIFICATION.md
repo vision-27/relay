@@ -5,7 +5,9 @@
 - Windows local checks: Node/Worker typechecks and 106 tests passed (one POSIX launcher test skipped). Local Worker integration verified native idle wake-up, messages held during busy turns, unrelated-conversation isolation, listener cancellation, existing channel compatibility, and the existing shared-budget tests.
 - A real Claude Code 2.1.299 process, using the installed login and an isolated local Worker, automatically registered and answered an idle message without channel flags or a special launcher. A second message sent during work was answered after the requested work completed. No existing peer conversations were used. The opt-in reproducer is `npm run test:claude-native`, with a $0.50 model budget.
 - Source tests cover concurrent attachment, native-ID recovery, provider separation, `/clear` transport rebinding, stale Stop rejection, normal permissions, and preserving unrelated hooks. No workspace or transcript content is used to identify a conversation.
-- Cross-platform CI, hosted rollout, local installation upgrade, and public npm publication are pending for this version. Interactive GUI and physical two-device acceptance remain unverified.
+- [GitHub Actions](https://github.com/vision-27/relay/actions/runs/38533074625) passed on Windows, macOS, and Linux for implementation commit `993db21`, including package setup and the installed MCP transport from an unrelated working directory.
+- Deployed the hosted Worker as version `69a82478-1ce6-49db-9ce6-8c80790c37fc`; hosted MCP reports alpha.13. Verified that the account request limit, pause state, budget epoch, and billing period were preserved. Upgraded the local Windows Claude configuration to the native MCP and all four lifecycle hooks, preserving unrelated settings and removing the old generated shortcut with a backup.
+- Public npm publication is awaiting maintainer authentication. Interactive GUI and physical two-device acceptance remain unverified.
 
 ## Project-folder launcher 0.8.0-alpha.12 - 14 October 2026
 

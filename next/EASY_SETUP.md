@@ -27,6 +27,9 @@ their MCP integrations. It includes its own runtime. No terminal or separate
 Node, Python, or Git installation is needed. This beta executable is unsigned;
 follow your device's software policy if Windows blocks it.
 
+This desktop download is alpha.10 and uses the older Claude launcher. For the
+current integration that attaches to ordinary Claude sessions, use npm below.
+
 ## Option B: npm
 
 With Node.js 22.13 or newer installed, open any terminal:

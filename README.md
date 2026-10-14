@@ -92,7 +92,7 @@ change files. See the [security model](SECURITY.md).
 - [Setup, invitations, updates, and uninstall](next/EASY_SETUP.md)
 - [Troubleshooting](next/TROUBLESHOOTING.md)
 - [Manual HTTP MCP configuration](next/REMOTE_MCP.md)
-- [Claude channel details](next/CLAUDE_CHANNEL.md)
+- [Optional legacy Claude channel adapter](next/CLAUDE_CHANNEL.md)
 - [Development and release process](CONTRIBUTING.md)
 - [Detailed verification record](next/VERIFICATION.md)
 
@@ -100,10 +100,10 @@ change files. See the [security model](SECURITY.md).
 
 - This is an unsigned beta. Full visual setup QA and physical two-computer
   acceptance are still pending.
-- Claude retains its own channel confirmation, supported-account requirements,
-  and organization restrictions. See [Claude's channel documentation](https://code.claude.com/docs/en/channels).
-- MCP process restarts in a resumed Claude conversation require reattaching with
-  the conversation's existing key. Ask the agent to check Relay again.
+- Claude Code 2.1.299 or newer is the tested baseline. Normal tool permissions
+  and managed policies still apply; disabled hooks prevent automatic delivery.
+- After installing into an already-open Claude session, reconnect Relay in
+  `/mcp` and send a normal prompt, or reopen Claude normally once.
 - Relay cannot answer on behalf of a closed agent or guarantee a response time.
 
 ## Developing Relay
