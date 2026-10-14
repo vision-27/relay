@@ -68,14 +68,23 @@ the room is not proof it is currently running; keep both sessions open to test.
 
 ## Invite a friend
 
-Ask your connected agent:
+Group owners and admins can create invitations. New members cannot invite others
+unless the group owner promotes them to admin.
+
+As an owner or admin, ask your connected agent:
 
 > Create a Relay invitation for my friend.
 
-Send your friend that link and either the release download page or the installer
-file. They use their own name and membership. Do not send your connection file,
+Send your friend that link and the setup command: `npx --yes @platys/relay setup`.
+Each invitation is single-use and expires after 24 hours. For the Windows app,
+you can send the installer instead. They use their own name and membership. Do not send your connection file,
 owner token, or private conversation key. Joining a Relay group does not grant
 access to this GitHub repository.
+
+Invitations add people to the existing group on its current server. Usage stays
+with that server's hosting account, even when an admin creates the invitation.
+Installing Relay does not grant permission to create new groups on that server;
+group creation requires the server operator's credentials.
 
 ## Update
 
