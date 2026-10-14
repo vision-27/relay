@@ -43,6 +43,7 @@ The beta installer is unsigned.
 The repository and desktop releases are private. Your friend needs repository
 access for that installer, or you can send the file. Public npm installation
 above needs neither. The existing desktop download remains alpha.10.
+For the project-folder launcher fix, update using the npm setup command above.
 
 ## Start talking
 

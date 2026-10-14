@@ -6,7 +6,7 @@
 - GitHub Actions passed on Windows, macOS, and Linux for implementation commit `1962874`: https://github.com/vision-27/relay/actions/runs/38527889570.
 - Launcher tests execute a stub agent in the inherited/chosen directory. Windows covers shell metacharacters in paths, forced folder selection, cancellation, missing folders, drive-root rejection, and the generated batch wrapper. POSIX coverage includes inherited directories and Linux chooser selection/cancellation.
 - The installed Windows desktop launcher was backed up and updated. Interactive native folder-picker visual QA has not been performed; tests substitute the selection result. No hosted Worker change is required.
-- npm alpha.12 publication was prepared and is awaiting the maintainer's npm account verification. The existing alpha.10 desktop installer does not contain this fix.
+- Published `@platys/relay@0.8.0-alpha.12` under `latest`. Anonymous registry lookup, a fresh global install, npx version, and setup-page HTTP verification passed using empty npm configs and a fresh cache. The existing alpha.10 desktop installer does not contain this fix.
 
 ## Public npm installation 0.8.0-alpha.11 - 14 October 2026
 

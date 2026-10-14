@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0-alpha.12 - Unreleased
+## 0.8.0-alpha.12 - 2026-10-14
 
 - Claude's Relay launcher preserves the project directory when called from a terminal. Desktop and setup launches choose a project instead of forcing the home directory; cancelling leaves Claude closed.
 - Folder paths stay separate from shell code. Windows launcher tests cover spaces and shell metacharacters, selection, cancellation, missing folders, and rejecting drive roots. Claude's normal trust and permission prompts remain enabled.
