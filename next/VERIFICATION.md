@@ -7,6 +7,7 @@
 - Added an allowlisted npm release archive and SHA-256 checksum, current setup/update/uninstall/troubleshooting guides, and tag-driven GitHub prereleases gated on the three-OS CI matrix. The package remains private and unpublished to npm; existing GitHub visibility is preserved.
 - Built the Windows executable with bundled Node 22.20.0 and exercised extraction plus runtime version verification. It is unsigned. Visual setup QA, physical macOS/Linux and two-computer acceptance remain pending. See the matching GitHub Actions run for remote matrix results; local Windows checks alone do not establish them.
 - Packaging does not deploy the hosted Worker or update installed device runtimes. Users rerun setup to activate a package update.
+- [The tagged release workflow](https://github.com/vision-27/relay/actions/runs/38518216075) passed on Windows x64, Linux x64, and macOS arm64 and published all three desktop artifacts plus the npm archive and checksums. This establishes clean-runner installation, transport, and launcher smoke evidence, not physical-device agent acceptance. An earlier Windows branch run stopped the replay fixture at 400 of 425 records; the follow-up test allows bounded recovery ticks and reports sync errors while still requiring all 425 records and the exact final cursor.
 
 ## Guided remote setup 0.8.0-alpha.9 - 14 October 2026
 

@@ -41,7 +41,20 @@ test('ambiguous native delivery does not get automatically sent again',async t=>
 test('replay drains every page and older searchable evidence remains available',async t=>{
   const {alice,bob}=await pair(t);
   for(let i=0;i<425;i++)alice.state.publish({id:crypto.randomUUID(),sessionId:alice.session.id,kind:'observation',text:i===0?'Unique historic cookie rationale':`Event ${i}`,paths:[]});
-  const started=performance.now();for(let i=0;i<5;i++)await alice.connector.tick();await bob.connector.tick();
+  const started=performance.now();
+  // Each tick sends at most 100 outbox items. A transient HTTP failure on a
+  // loaded runner retains work for the next tick, just as the background loop does.
+  for(let i=0;i<10&&alice.state.pending().length;i++){
+    await alice.connector.tick();
+    const error=alice.state.get<{message:string}>('syncError');if(error)t.diagnostic('Sender sync will retry: '+error.message);
+  }
+  assert.equal(alice.state.pending().length,0,'All 425 events must leave the sender outbox');
+  for(let i=0;i<3;i++){
+    await bob.connector.tick();
+    const error=bob.state.get<{message:string}>('syncError');if(!error)break;
+    t.diagnostic('Replay will resume from its saved cursor: '+error.message);
+  }
+  assert.equal(bob.state.get('syncError'),null);
   assert.equal(bob.state.get('cursor'),425);assert.equal(bob.state.events().length,425);
   assert.ok(bob.state.search('historic cookie').some(e=>e.text.includes('Unique historic')));
   t.diagnostic(`425-event append and replay: ${Math.round(performance.now()-started)} ms on this machine; not a hosted latency benchmark`);
