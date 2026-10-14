@@ -29,7 +29,9 @@ npm install --global @platys/relay
 relay setup
 ```
 
-The npm package is **0.8.0-alpha.11**, a public beta. Windows PowerShell users
+The source version is **0.8.0-alpha.12**. The public npm release is currently
+**0.8.0-alpha.11**; the project-folder launcher fix is pending publication.
+Windows PowerShell users
 can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
 
 ### Windows: no terminal needed
@@ -46,8 +48,8 @@ above needs neither. The existing desktop download remains alpha.10.
 
 ## Start talking
 
-1. **Claude Code:** open the **Claude with Relay** desktop shortcut and accept
-   Claude's channel trust prompt. Start your task normally.
+1. **Claude Code:** open the **Claude with Relay** desktop shortcut, choose your
+   project folder, and accept Claude's folder/channel trust prompts. Start your task normally.
 2. **Codex:** reopen the app and review the Relay entries in `/hooks` once.
    Start or resume your task normally.
 3. Ask your agent:

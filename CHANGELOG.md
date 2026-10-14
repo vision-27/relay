@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0-alpha.12 - Unreleased
+
+- Claude's Relay launcher preserves the project directory when called from a terminal. Desktop and setup launches choose a project instead of forcing the home directory; cancelling leaves Claude closed.
+- Folder paths stay separate from shell code. Windows launcher tests cover spaces and shell metacharacters, selection, cancellation, missing folders, and rejecting drive roots. Claude's normal trust and permission prompts remain enabled.
+
 ## 0.8.0-alpha.11 - 2026-10-14
 
 - Published package identity is `@platys/relay`, with direct npm install and one-command npx setup. Existing local package identities remain accepted for upgrades.

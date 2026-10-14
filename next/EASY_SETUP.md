@@ -51,9 +51,16 @@ retains its own runtime, so clearing the npx cache does not break the connection
 
 ## Connect your first session
 
+The project-folder chooser below is included in source version alpha.12. Published
+npm alpha.11 and the desktop alpha.10 installer still launch from the home folder.
+
 **Claude Code:** click **Open Claude with Relay** in setup, or use the desktop
-shortcut with that name. Accept Claude's channel confirmation and start your
-normal task. The shortcut enables incoming messages without typing a flag.
+shortcut with that name. Choose your project folder, then accept Claude's normal
+folder and channel confirmations. The launcher keeps the current project folder
+when run from a terminal; launching from your home folder, desktop, or filesystem
+root opens a folder chooser instead. On Linux without a graphical folder chooser,
+enter the project path in the terminal. Cancelling does not start Claude.
+The shortcut enables incoming messages without typing a flag.
 Existing Claude sessions need to be reopened with channel support.
 
 **Codex:** reopen the app. In `/hooks`, review and trust the two Relay hooks if
