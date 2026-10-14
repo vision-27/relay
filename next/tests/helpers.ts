@@ -12,7 +12,7 @@ import { Connector } from '../node/connector.js';
 import type { Deliver } from '../node/adapters.js';
 export function temporary(t?:TestContext){
   const parent=realpathSync(tmpdir()),dir=mkdtempSync(join(parent,'relay-next-'));
-  const cleanup=()=>{if(dirname(realpathSync(dir))!==parent)throw new Error('Unexpected test directory');rmSync(dir,{recursive:true,force:true});};
+  const cleanup=()=>{if(dirname(realpathSync(dir))!==parent)throw new Error('Unexpected test directory');rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});};
   t?.after(cleanup);return {dir,cleanup};
 }
 export function git(repo:string,...args:string[]){return execFileSync('git',['-C',repo,...args],{encoding:'utf8',windowsHide:true,stdio:['ignore','pipe','pipe']}).trim();}

@@ -7,7 +7,8 @@ friends' agents. Each person installs it once. You do not need the same workspac
 
 - Install and sign in to Claude Code or Codex.
 - Ask your friend for a **fresh Relay invitation link**.
-- Get the Windows installer or npm archive from the
+- For npm setup, install Node.js 22.13 or newer. No npm account is needed.
+- For the Windows app instead, get the installer from the
   [beta release](https://github.com/vision-27/relay/releases/tag/v0.8.0-alpha.10).
   This is a private repository: the owner can give you access or send the file.
 
@@ -28,20 +29,25 @@ follow your device's software policy if Windows blocks it.
 
 ## Option B: npm
 
-With Node.js 22.13 or newer installed, open a terminal in the folder containing
-the downloaded archive:
+With Node.js 22.13 or newer installed, open any terminal:
 
 ```sh
-npm install --global ./relay-0.8.0-alpha.10.tgz
+npx --yes @platys/relay setup
+```
+
+Or install a permanent CLI command:
+
+```sh
+npm install --global @platys/relay
 relay setup
 ```
 
-In Windows PowerShell, use `npm.cmd` and `relay.cmd` if execution policy blocks
+In Windows PowerShell, use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks
 the corresponding PowerShell command shims.
 
-The setup screen asks for the same invitation and name. The archive is installed
-locally through npm; there is no published npm-name or PyPI installation yet.
-Relay is a Node application, so npm is its native package manager.
+The setup screen asks for the same invitation and name. npm downloads the public
+package automatically; no archive, GitHub access, or npm login is needed. Setup
+retains its own runtime, so clearing the npx cache does not break the connection.
 
 ## Connect your first session
 
@@ -73,8 +79,9 @@ access to this GitHub repository.
 
 ## Update
 
-Download the newer installer and run it, or install the newer npm archive and
-run `relay setup` again. Setup retains the saved membership and backs up changed
+Run `npx --yes @platys/relay@latest setup`, or update with
+`npm install --global @platys/relay@latest` and run `relay setup` again.
+Windows app users can run a newer installer. Setup retains the saved membership and backs up changed
 client configuration. Reopen your coding client after updating. An npm package
 update alone does not replace the persistent MCP runtime until setup runs.
 
@@ -85,7 +92,7 @@ update alone does not replace the persistent MCP runtime until setup runs.
    configuration. Keep unrelated hooks.
 3. Close sessions that were using Relay and delete **Claude with Relay** from
    your desktop.
-4. If you used npm, run `npm uninstall --global @relay-workspace/cli`.
+4. If you used npm, run `npm uninstall --global @platys/relay`.
 5. After confirming you no longer need the connection or backups, remove the
    local `~/.relay/remote-mcp` folder. On Windows it is under your user folder.
 

@@ -21,7 +21,7 @@ export function runtimeNode(cli:string):string {
 export function installRuntime(cli:string,dir:string):string {
   const source=resolve(dirname(cli),'../..');
   const pkg=JSON.parse(readFileSync(join(source,'package.json'),'utf8'));
-  if(pkg.name!=='@relay-workspace/cli'||!/^\d+\.\d+\.\d+[a-zA-Z0-9.+-]*$/.test(pkg.version))throw new Error('Not a Relay package');
+  if(!['@platys/relay','@relay-workspace/cli'].includes(pkg.name)||!/^\d+\.\d+\.\d+[a-zA-Z0-9.+-]*$/.test(pkg.version))throw new Error('Not a Relay package');
   const files=new Map<string,Buffer>();
   const collect=(folder:string,target:string)=>{
     for(const item of readdirSync(folder,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){

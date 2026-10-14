@@ -43,7 +43,7 @@ Do not disable endpoint protection. If PowerShell blocks an npm shim, use
 ## `relay` is not recognized
 
 Reopen the terminal after installing. Confirm `node --version` is at least
-22.13 and that `npm list --global @relay-workspace/cli` shows the package.
+22.13 and that `npm list --global @platys/relay` shows the package.
 The Windows setup app bundles its own runtime and does not require the CLI.
 
 ## The GitHub download is unavailable

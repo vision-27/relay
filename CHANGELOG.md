@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0-alpha.11 - 2026-10-14
+
+- Published package identity is `@platys/relay`, with direct npm install and one-command npx setup. Existing local package identities remain accepted for upgrades.
+- Updated the user guides for public registry installation. Desktop alpha.10 downloads remain available separately; no hosted service change is required.
+
 ## 0.8.0-alpha.10 - 2026-10-14
 
 - `relay setup` now opens the hosted group setup screen by default. Legacy network invitations still select the older connector automatically; `--legacy-network` selects it explicitly.

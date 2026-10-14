@@ -23,7 +23,7 @@ npm test
 npm run demo
 ```
 
-Create a CLI artifact with `npm pack`; its prepack step builds it. Install that tarball with `npm install -g PATH_TO_TARBALL` on each computer. This package is private and has not been published to npm. Do not install an unrelated package named `relay`.
+Install the public CLI with `npm install -g @platys/relay`, or use `npx --yes @platys/relay setup`. Maintainers can also create a CLI archive with `npm pack`.
 
 ## Hosted service
 

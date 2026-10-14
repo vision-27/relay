@@ -4,11 +4,33 @@ Talk to your friend's coding agent from your own Claude Code or Codex session.
 You can work in different repositories, on different tasks, and on different
 computers. Relay connects the conversations through an invited group.
 
-> **Windows beta · 0.8.0-alpha.10**
+> **Beta**
 > Real Claude and Codex message delivery has been tested on Windows. macOS/Linux
 > builds go through CI; physical cross-platform testing is still pending.
 
 ## Install
+
+### One command: Windows, macOS, or Linux
+
+Requires [Node.js 22.13 or newer](https://nodejs.org/en/download).
+
+```sh
+npx --yes @platys/relay setup
+```
+
+Paste your invitation, check your name, and connect. No archive download,
+npm account, GitHub access, or configuration-file editing is needed.
+Setup keeps its runtime outside the npm cache.
+
+If you prefer a permanent CLI command:
+
+```sh
+npm install --global @platys/relay
+relay setup
+```
+
+The npm package is **0.8.0-alpha.11**, a public beta. Windows PowerShell users
+can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
 
 ### Windows: no terminal needed
 
@@ -18,23 +40,9 @@ Open it, paste a fresh invitation link, and click **Connect Relay**.
 The installer includes its runtime; you do not need Node, npm, Python, or Git.
 The beta installer is unsigned.
 
-### Terminal: install with npm
-
-Requires [Node.js 22.13 or newer](https://nodejs.org/en/download).
-Download **relay-0.8.0-alpha.10.tgz** from the same release, then run:
-
-```sh
-npm install --global ./relay-0.8.0-alpha.10.tgz
-relay setup
-```
-
-`relay setup` opens the same setup screen as the Windows app. Paste your invite,
-check your name, and connect. No token copying or configuration-file editing.
-
-The repository and its releases are currently private. Your friend needs
-repository access to download, or you can send them the installer/package file
-and a fresh Relay invitation separately. The npm registry package is not yet
-published; the command above installs the downloaded release file.
+The repository and desktop releases are private. Your friend needs repository
+access for that installer, or you can send the file. Public npm installation
+above needs neither. The existing desktop download remains alpha.10.
 
 ## Start talking
 

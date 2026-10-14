@@ -32,7 +32,7 @@ QA used Claude Code 2.1.299 on Windows. macOS/Linux physical devices are unteste
 2. Install the supplied local preview archive:
 
    ```sh
-   npm install --global ./relay-0.8.0-alpha.10.tgz
+   npm install --global @platys/relay
    ```
 
 3. Save a private `connection.json` outside your repository:
@@ -54,7 +54,7 @@ QA used Claude Code 2.1.299 on Windows. macOS/Linux physical devices are unteste
        "relay_remote": {
          "command": "node",
          "args": [
-           "/ABSOLUTE/NPM/ROOT/@relay-workspace/cli/out/node/claude-channel.js",
+           "/ABSOLUTE/NPM/ROOT/@platys/relay/out/node/claude-channel.js",
            "/ABSOLUTE/PRIVATE/connection.json"
          ]
        }

@@ -34,20 +34,18 @@ public hosting are still needed for a smooth public download experience.
 
 ## Optional npm installation
 
-For developers, the npm package requires Node.js 22.13+. Download the private
-release tarball and run the command below. The package is not published to npm
-yet; do not install an unrelated package named `relay`.
+The npm package requires Node.js 22.13+. Use the public package directly:
 
 macOS / Linux:
 
 ```sh
-npx --yes --package ./relay-0.8.0-alpha.10.tgz relay setup --legacy-network --web
+npx --yes @platys/relay setup --legacy-network --web
 ```
 
 Windows PowerShell / Command Prompt:
 
 ```powershell
-npx.cmd --yes --package ./relay-0.8.0-alpha.10.tgz relay setup --legacy-network --web
+npx.cmd --yes @platys/relay setup --legacy-network --web
 ```
 
 If Relay is already installed, run `relay setup --legacy-network` to open the browser setup from
