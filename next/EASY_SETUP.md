@@ -51,8 +51,8 @@ retains its own runtime, so clearing the npx cache does not break the connection
 
 ## Connect your first session
 
-The project-folder chooser below is included in source version alpha.12. Published
-npm alpha.11 and the desktop alpha.10 installer still launch from the home folder.
+The project-folder chooser below requires alpha.12 or newer. Earlier npm releases
+and the desktop alpha.10 installer still launch from the home folder.
 
 **Claude Code:** click **Open Claude with Relay** in setup, or use the desktop
 shortcut with that name. Choose your project folder, then accept Claude's normal

@@ -29,9 +29,7 @@ npm install --global @platys/relay
 relay setup
 ```
 
-The source version is **0.8.0-alpha.12**. The public npm release is currently
-**0.8.0-alpha.11**; the project-folder launcher fix is pending publication.
-Windows PowerShell users
+Version **0.8.0-alpha.12** includes the project-folder launcher fix. Windows PowerShell users
 can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
 
 ### Windows: no terminal needed
