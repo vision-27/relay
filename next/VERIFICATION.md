@@ -6,7 +6,10 @@
 - With the longer background-hook timeout, real Claude answered a message after 95 seconds idle and then answered a busy-turn message after completing its task. Ordinary session startup, unrelated working directory, and no channel flags were retained. The reproducible native test now includes the 95-second wait.
 - Added regressions for returning backend rejection instead of false attachment success and preserving pending messages in the attachment response. Node/Worker typechecks and all 108 applicable local tests passed; one POSIX-only test was skipped on Windows.
 - Wake hooks have a seven-day continuous-idle timeout, bounded below the native millisecond timer limit. Normal turns replace the listener; session end, process exit, and busy turns cancel it. The change does not grant tool permissions or read transcripts.
-- Local Worker integration, release CI, device upgrade, and npm publication are pending. The hosted alpha.13 server is compatible; no server logic change is required. Physical two-device acceptance remains unverified.
+- Local Worker integration passed using official MCP SDK clients, covering installed setup, cross-session routing, reconnect replay, duplicate suppression, revocation, and shared-budget pause. The final real Claude rerun completed with exit code 0 and both idle/busy answers recorded.
+- [Release CI](https://github.com/vision-27/relay/actions/runs/38540709301) passed on Windows, macOS, and Linux for implementation commit `abeeac0`. Both installed Windows client configurations now point to alpha.14; verified Claude wake-hook timeout is 604800 seconds. Existing running clients need a normal restart to load the new runtime.
+- Published `@platys/relay@0.8.0-alpha.14` publicly under `latest`. Anonymous registry lookup, fresh global installation, npx execution, and setup-page HTTP verification passed with empty npm configuration and a fresh cache. The registry tarball matches the validated release archive (SHA-1 `2364a757f64f21ccd6f68ffebae29ff93fceb28c`).
+- The hosted alpha.13 server is compatible; no server logic change or budget change was needed. Physical two-device acceptance remains unverified. Live-room diagnostics were read-only: existing unanswered messages were neither resent nor acknowledged by these tests.
 
 ## Native Claude session integration 0.8.0-alpha.13 - 14 October 2026
 
