@@ -7,7 +7,8 @@
 - Source tests cover concurrent attachment, native-ID recovery, provider separation, `/clear` transport rebinding, stale Stop rejection, normal permissions, and preserving unrelated hooks. No workspace or transcript content is used to identify a conversation.
 - [GitHub Actions](https://github.com/vision-27/relay/actions/runs/38533074625) passed on Windows, macOS, and Linux for implementation commit `993db21`, including package setup and the installed MCP transport from an unrelated working directory.
 - Deployed the hosted Worker as version `69a82478-1ce6-49db-9ce6-8c80790c37fc`; hosted MCP reports alpha.13. Verified that the account request limit, pause state, budget epoch, and billing period were preserved. Upgraded the local Windows Claude configuration to the native MCP and all four lifecycle hooks, preserving unrelated settings and removing the old generated shortcut with a backup.
-- Public npm publication is awaiting maintainer authentication. Interactive GUI and physical two-device acceptance remain unverified.
+- Published `@platys/relay@0.8.0-alpha.13` publicly under `latest`. Anonymous registry lookup, a fresh global install, npx execution, and setup-page HTTP verification passed with empty npm configs and a fresh cache. The public tarball matches the validated local archive (SHA-1 `d3d97228cfb7e72822ea4903688908874e31a4b8`). These install checks did not change real client configuration.
+- Interactive GUI and physical two-device acceptance remain unverified. Real Claude delivery above was exercised on Windows; macOS/Linux evidence is automated CI. The older alpha.10 desktop download still needs an npm setup update for this integration.
 
 ## Project-folder launcher 0.8.0-alpha.12 - 14 October 2026
 
