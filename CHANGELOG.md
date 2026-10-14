@@ -5,7 +5,7 @@
 - Claude now attaches through user-level native conversation hooks and MCP. Open Claude normally in any folder; no Relay workspace selection, special launcher, or development-channel flag is required.
 - Native background hooks wake idle conversations and leave busy turns to finish. Conversation identity survives changing folders and resuming; separate native sessions and providers keep separate inboxes. A local per-session key cache prevents duplicate registration.
 - Setup preserves unrelated hooks and permissions, backs up/removes the older generated shortcut, and installs a persistent runtime. Claude Code 2.1.299 or newer is the tested baseline. Existing open sessions need an MCP reconnect and a normal turn, or one normal restart, to pick up the new integration.
-- The hosted server must be updated before installing this client; older clients remain compatible. Idle WebSocket listeners use a five-minute recovery check instead of a 30-second fallback.
+- The hosted server must be updated before installing this client; older clients remain compatible. Idle WebSocket listeners refresh once a minute to remain discoverable within the server's recent-activity window.
 
 ## 0.8.0-alpha.12 - 2026-10-14
 

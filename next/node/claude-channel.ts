@@ -83,7 +83,8 @@ export class ClaudeChannel {
   private attach(id:string,key:string){
     this.session={id,key};this.connect();
     this.heartbeat=setInterval(()=>{if(this.socket?.readyState===WebSocket.OPEN){if(Date.now()-this.lastPong>60000)this.socket.terminate();else this.socket.send('ping');}},20000);
-    this.fallback=setInterval(()=>this.schedule(true),300000);
+    // Refresh within the server's 90-second recent-activity window, including idle sessions.
+    this.fallback=setInterval(()=>this.schedule(true),60000);
   }
   private connect(){
     if(this.stopped)return;
