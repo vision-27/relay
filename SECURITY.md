@@ -6,7 +6,7 @@ Relay is an alpha collaboration service for trusted project members and trusted 
 
 Project membership tokens scope access to one project. Invitations are single-use and expire after 24 hours; membership can be revoked. All project members can read the project log, including directed questions. Recipient addressing is a delivery rule, not private messaging.
 
-Connected repository hooks publish intent and visible completed-turn observations with session and Git provenance. Relay does not transfer hidden reasoning or entire raw session files. Redaction is best effort: review what connected agents publish and do not use shared context as a secret store.
+The default hosted MCP setup shares explicit questions, replies, and task descriptions. The optional repository connector's hooks also publish intent and visible completed-turn observations with session and Git provenance. Relay does not transfer hidden reasoning or entire raw session files. Redaction is best effort: review what connected agents publish and do not use shared context as a secret store.
 
 ## Local trust and transport
 

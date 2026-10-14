@@ -3,7 +3,35 @@
   "name": "relay-context",
   "main": "index.ts",
   "compatibility_date": "2026-09-28",
-  "durable_objects": { "bindings": [{ "name": "PROJECTS", "class_name": "ProjectRoom" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ProjectRoom"] }],
-  "observability": { "enabled": false }
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PROJECTS",
+        "class_name": "ProjectRoom"
+      },
+      {
+        "name": "BUDGET",
+        "class_name": "AccountBudget"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ProjectRoom"
+      ]
+    },
+    {
+      "tag": "v2-budget",
+      "new_sqlite_classes": [
+        "AccountBudget"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": false
+  },
+  "workers_dev": true
 }

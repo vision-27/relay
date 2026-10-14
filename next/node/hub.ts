@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Room, routeRoom } from '../core/room.js';
 import { SQLite } from './sqlite.js';
 import { id } from '../core/types.js';
+import { VERSION } from '../core/version.js';
 export async function startHub(dir:string,createKey:string,port=0):Promise<{url:string;server:Server;close:()=>Promise<void>}> {
   mkdirSync(dir,{recursive:true}); const rooms=new Map<string,{room:Room;db:SQLite}>(), clients=new Map<WebSocket,{projectId:string;token:string}>();
   const get=(projectId:string)=>{
@@ -15,7 +16,7 @@ export async function startHub(dir:string,createKey:string,port=0):Promise<{url:
   const server=createServer(async(req,res)=>{
     try {
       const url=new URL(req.url??'/',`http://127.0.0.1`);
-      if(url.pathname==='/health') { res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({ok:true,version:'0.7.0-alpha.1',mode:'local'}));return; }
+      if(url.pathname==='/health') { res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({ok:true,version:VERSION,mode:'local'}));return; }
       const match=url.pathname.match(/^\/projects\/([a-zA-Z0-9_-]+)\/([a-z]+)$/);
       if(!match) { res.writeHead(404).end();return; }
       const projectId=match[1]!,action=match[2]!; let data='';
@@ -24,7 +25,7 @@ export async function startHub(dir:string,createKey:string,port=0):Promise<{url:
       if(action==='create' && headers.get('authorization')!==`Bearer ${createKey}`) {res.writeHead(401).end();return;}
       const response=await routeRoom(get(projectId),new Request(url,{method:req.method,headers,...(req.method==='POST'?{body:data}:{})}),action,action==='create');
       res.writeHead(response.status,Object.fromEntries(response.headers));res.end(await response.text());
-      if(response.ok && req.method==='POST') for(const [ws,client] of clients) if(client.projectId===projectId){
+      if(response.ok && req.method==='POST' && action!=='artifacts') for(const [ws,client] of clients) if(client.projectId===projectId){
         try { await get(projectId).authenticate(client.token); if(ws.readyState===WebSocket.OPEN)ws.send('{"type":"changed"}'); }
         catch {ws.close(1008,'Membership revoked');}
       }

@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { api } from '../node/client.js';
+import { binding, code } from './helpers.js';
+import type { RelayEvent } from '../core/types.js';
+
+const server=process.argv[2]??'http://127.0.0.1:8793';
+if(!['localhost','127.0.0.1','[::1]'].includes(new URL(server).hostname))throw new Error('This probe only targets an isolated local emulator');
+const key='local-network-test',project=crypto.randomUUID();
+const initialized=await fetch(server+'/budget/initialize',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({billingAnchor:new Date().toISOString(),initialUsage:0})});
+assert.equal(initialized.status,200,await initialized.text());
+const a=await api<{token:string;memberId:string}>(server,project,key,'create',{name:'Network fixture',ownerName:'Alice',repository:'network:fixture',mode:'network'});
+const invite=await api<{code:string}>(server,project,a.token,'invite',{});
+const b=await api<{token:string;memberId:string}>(server,project,'','join',{code:invite.code,name:'Von',repository:'different/repository'});
+const alice=binding(a.memberId,'codex'),von=binding(b.memberId,'claude',crypto.randomUUID(),{...code,repository:'friend/auth'});
+await api(server,project,a.token,'sessions',alice);await api(server,project,b.token,'sessions',von);
+const question={id:crypto.randomUUID(),sessionId:alice.id,targetSessionId:von.id,kind:'question',text:'How does your other repository handle pagination?',paths:[]};
+const sent=await api<RelayEvent>(server,project,a.token,'events',question);
+assert.equal((await api<RelayEvent>(server,project,a.token,'events',question)).seq,sent.seq);
+await api(server,project,b.token,'events',{id:crypto.randomUUID(),sessionId:von.id,targetSessionId:alice.id,replyTo:sent.id,kind:'reply',phase:'final',text:'Follow the returned cursor.',paths:[]});
+const snapshot=await api<any>(server,project,a.token,'snapshot');
+assert.equal(snapshot.project.mode,'network');assert.equal(snapshot.receipts.find((r:any)=>r.eventId===sent.id).state,'answered');
+assert.equal(snapshot.sessions.length,2);assert.notEqual(snapshot.sessions[0].git.repository,snapshot.sessions[1].git.repository);
+await assert.rejects(api(server,project,a.token,'tasks',{}),/unavailable in a network/);
+await api(server,project,a.token,'revoke',{memberId:b.memberId});await assert.rejects(api(server,project,b.token,'snapshot'),/revoked/);
+console.log('PASS: Cloudflare network mode, cross-repository membership and sessions, durable question/reply, deduplication, answered receipt, repository-operation rejection and revocation. Local emulator only.');

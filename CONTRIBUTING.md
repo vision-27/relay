@@ -29,6 +29,23 @@ See [setup](next/README.md) and [verification](next/VERIFICATION.md). `npm run t
 
 ## Publication
 
+Build distributable files with `npm run package:release` and
+`npm run build:desktop`. Outputs and SHA-256 checksums go to `.relay/releases/`.
+The npm archive contains compiled runtime code and user guides; local state,
+credentials, model transcripts, tests, and development dependencies are excluded.
+
+`relay setup` defaults to hosted group onboarding. The older connector setup is
+available through `relay setup --legacy-network`; legacy invitation codes are
+also recognized automatically.
+
+For a release, update `package.json`, its lockfile, `next/core/version.ts`, the
+README/setup commands, and `.github/RELEASE_NOTES.md` together. Push an annotated
+`vVERSION` tag only after review. The release workflow requires the Windows,
+macOS, and Linux checks before creating a GitHub prerelease and attaching builds.
+Release creation preserves the repository's visibility. The npm registry is not
+configured for publishing; the package remains `private: true` to prevent an
+accidental registry release. No open-source license is granted by packaging it.
+
 Inspect the remote, branch and repository visibility. Stage reviewed source and documentation explicitly, inspect the staged diff for credentials and run the checks above. Commit and push only with user authorization. Preserve Git history; do not force-push. Verify the remote commit and its Actions results before claiming CI passed.
 
 A source push does not deploy a Worker or upgrade another developer's installation. Deployment and runtime activation are separate actions. Legacy source is available in Git history.

@@ -79,3 +79,18 @@ test('background connectors receive WebSocket invalidations and deliver without 
   while(!bob.state.delivery(question.eventId,bob.session.id)&&Date.now()<deadline)await new Promise(r=>setTimeout(r,25));
   assert.equal(bob.state.delivery(question.eventId,bob.session.id)?.state,'accepted');
 });
+
+test('held delivery stays quiet across ticks and restarts, then retries after a session hook',async t=>{
+  let offers=0,ready=false;
+  const {alice,bob}=await pair(t,async()=>{offers++;return ready?{state:'accepted',detail:'Resumed'}:{state:'held',detail:'Resume session'};});
+  const asked=callTool(alice.state,'relay_ask',{session_id:alice.session.id,target_session_id:bob.session.id,question:'Review when ready'}) as {eventId:string};
+  await alice.connector.tick();await bob.connector.tick();await bob.connector.tick();
+  const reopened=new State(stateDir(bob.repo));const connector=new Connector(reopened,new Remote(bob.config),async()=>{offers++;return {state:'accepted',detail:'Resumed'};});
+  try{
+    for(let i=0;i<4;i++)await connector.tick();
+    assert.equal(offers,1);assert.equal(reopened.pending().length,0);
+    const binding=reopened.binding(bob.session.id);binding.hookSeenAt=(binding.hookSeenAt??0)+1;reopened.bind(binding);ready=true;
+    await connector.tick();assert.equal(offers,2);
+    assert.equal(reopened.delivery(asked.eventId,bob.session.id)?.state,'accepted');
+  }finally{await connector.stop();reopened.close();}
+});

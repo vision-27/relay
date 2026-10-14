@@ -1,0 +1,173 @@
+import assert from 'node:assert/strict';
+import { spawn, execFileSync } from 'node:child_process';
+import { createServer } from 'node:net';
+import { resolve } from 'node:path';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { writeFileSync } from 'node:fs';
+import { temporary } from './helpers.js';
+import WebSocket from 'ws';
+import { startCompanion } from '../node/remote-companion.js';
+import { ClientBudget } from '../node/request-budget.js';
+import { ClaudeChannel } from '../node/claude-channel.js';
+import { setupRemote } from '../node/remote-setup.js';
+
+const temp=temporary(),portServer=createServer();
+await new Promise<void>(done=>portServer.listen(0,'127.0.0.1',done));
+const port=(portServer.address() as {port:number}).port;await new Promise<void>(done=>portServer.close(()=>done()));
+const server=`http://127.0.0.1:${port}`,key='remote-mcp-isolated-test',project=crypto.randomUUID();
+const child=spawn(process.execPath,[resolve('node_modules/wrangler/bin/wrangler.js'),'dev','--local','--config','next/worker/wrangler.jsonc','--ip','127.0.0.1','--port',String(port),'--persist-to',temp.dir,'--var',`RELAY_CREATE_KEY:${key}`],{windowsHide:true,detached:process.platform!=='win32',stdio:['ignore','pipe','pipe']});
+let log='';for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>{log=(log+chunk.toString()).slice(-6000);});
+const clients:Client[]=[];
+const sockets:WebSocket[]=[];
+let companion:Awaited<ReturnType<typeof startCompanion>>|undefined;
+let recoveredChannel:ClaudeChannel|undefined;
+async function rest(path:string,token:string,body?:unknown,origin?:string) {
+  const response=await fetch(server+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',...(origin?{Origin:origin}:{})},...(body?{body:JSON.stringify(body)}:{})});
+  assert.equal(response.status,200,await response.clone().text());return response.json() as Promise<any>;
+}
+async function connect(token:string) {
+  const client=new Client({name:'relay-active-session-test',version:'1.0.0'},{capabilities:{}});
+  await client.connect(new StreamableHTTPClientTransport(new URL(`${server}/projects/${project}/mcp`),{requestInit:{headers:{Authorization:'Bearer '+token}}}));clients.push(client);return client;
+}
+async function call(client:Client,name:string,args:Record<string,unknown>) {
+  const response=await client.callTool({name,arguments:args});assert.ok(!response.isError,JSON.stringify(response));
+  return JSON.parse((response.content as {type:string;text:string}[])[0]!.text);
+}
+try {
+  let ready=false;const deadline=Date.now()+45_000;
+  while(Date.now()<deadline){if(child.exitCode!==null)throw Error('Wrangler stopped: '+log);try{const response=await fetch(server+'/health');if([200,429].includes(response.status)){ready=true;break;}}catch{}await new Promise(done=>setTimeout(done,150));}
+  assert.ok(ready,'Local Worker startup timed out: '+log);
+  await rest('/budget/initialize',key,{billingAnchor:new Date().toISOString(),initialUsage:0});
+  const alice=await rest(`/projects/${project}/create`,key,{name:'MCP fixture',ownerName:'Alice',repository:'network:mcp',mode:'network'});
+  const clientA=await connect(alice.token),tools=await clientA.listTools();assert.equal(tools.tools.length,10);
+  const setupInvite=await rest(`/projects/${project}/invite`,alice.token,{});
+  const setupHome=resolve(temp.dir,'setup-home'),setupDir=resolve(setupHome,'remote');
+  const setupValues={dir:setupDir,provider:'both',name:'Setup fixture',invite:server+'/connect#'+encodeURIComponent(JSON.stringify({projectId:project,code:setupInvite.code}))};
+  const setup=await setupRemote(setupValues,resolve('out/node/cli.js'),undefined,{home:setupHome,env:{}});
+  await setupRemote(setupValues,resolve('out/node/cli.js'),undefined,{home:setupHome,env:{}});
+  const setupClient=new Client({name:'relay-installed-setup-test',version:'1.0.0'},{capabilities:{}});clients.push(setupClient);
+  await setupClient.connect(new StdioClientTransport({command:process.execPath,args:[resolve(setup.cli,'../claude-channel.js'),resolve(setupDir,'connection.json')],stderr:'pipe'}));
+  assert.equal((await setupClient.listTools()).tools.length,10);assert.deepEqual(setupClient.getServerCapabilities()?.experimental?.['claude/channel'],{});await setupClient.close();
+  const channelConfig=resolve(temp.dir,'channel-connection.json');writeFileSync(channelConfig,JSON.stringify({server,projectId:project,token:alice.token}));
+  const channel=new Client({name:'relay-claude-channel-test',version:'1.0.0'},{capabilities:{}}),channelEvents:any[]=[];
+  channel.fallbackNotificationHandler=async event=>{if(event.method==='notifications/claude/channel')channelEvents.push(event);};
+  clients.push(channel);await channel.connect(new StdioClientTransport({command:process.execPath,args:[resolve('out/node/claude-channel.js'),channelConfig],stderr:'pipe'}));
+  assert.deepEqual(channel.getServerCapabilities()?.experimental?.['claude/channel'],{});
+  const channelSession=await call(channel,'relay_open',{provider:'claude',task:'Channel isolation test'});
+  assert.equal((await call(channel,'relay_open',{provider:'claude',task:'Repeated open'})).session_id,channelSession.session_id);
+  const channelQuestion=crypto.randomUUID();
+  await rest(`/projects/${project}/dashboard`,alice.token,{operation:'send',targetSessionId:channelSession.session_id,requestId:channelQuestion,text:'Push into Claude'});
+  const channelDeadline=Date.now()+5000;while(!channelEvents.length&&Date.now()<channelDeadline)await new Promise(done=>setTimeout(done,25));
+  assert.equal(channelEvents.length,1);assert.equal(channelEvents[0].params.meta.event_id,channelQuestion);
+  assert.ok(!JSON.stringify(channelEvents).includes(channelSession.session_key));
+  await call(channel,'relay_reply',{session_key:channelSession.session_key,question_id:channelQuestion,request_id:crypto.randomUUID(),answer:'Channel reply'});
+  await channel.close();
+  // Reattach using this conversation's validated key, then interrupt the actual
+  // WebSocket to exercise offline replay without restarting the model or server.
+  const recoveredEvents:any[]=[];
+  recoveredChannel=new ClaudeChannel({server,projectId:project,token:alice.token},event=>recoveredEvents.push(event),new ClientBudget(resolve(temp.dir,'channel-budget.sqlite3')));
+  const channelCall=(name:string,args:Record<string,unknown>)=>recoveredChannel!.handle({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}});
+  await recoveredChannel.handle({method:'notifications/initialized'});
+  await channelCall('relay_check',{session_key:channelSession.session_key});
+  await assert.rejects(channelCall('relay_check',{session_key:'wrong-conversation-key'}),/own Relay key/);
+  await assert.rejects(channelCall('relay_open',{provider:'codex',task:'Wrong provider'}),/Claude conversation/);
+  await assert.rejects(channelCall('relay_open',{provider:'claude',task:'Already attached'}),/already attached/);
+  const channelSocket=()=> (recoveredChannel as unknown as {socket:WebSocket}).socket;
+  const waitFor=async(predicate:()=>boolean)=>{const end=Date.now()+6000;while(!predicate()&&Date.now()<end)await new Promise(done=>setTimeout(done,25));assert.ok(predicate(),'Claude channel condition timed out');};
+  await waitFor(()=>channelSocket()?.readyState===WebSocket.OPEN);
+  await new Promise(done=>setTimeout(done,500));
+  const droppedSocket=channelSocket();droppedSocket.terminate();
+  const offlineQuestion=crypto.randomUUID();
+  await rest(`/projects/${project}/dashboard`,alice.token,{operation:'send',targetSessionId:channelSession.session_id,requestId:offlineQuestion,text:'Sent while channel transport is offline'});
+  await waitFor(()=>channelSocket()!==droppedSocket&&channelSocket().readyState===WebSocket.OPEN&&recoveredEvents.length===1);
+  assert.equal(recoveredEvents[0].params.meta.event_id,offlineQuestion);
+  channelSocket().terminate();
+  await waitFor(()=>channelSocket().readyState===WebSocket.OPEN);
+  await recoveredChannel.check();assert.equal(recoveredEvents.length,1,'Reconnect must not emit the same pending event twice');
+  const unrelated=await call(clientA,'relay_open',{provider:'claude',task:'Unrelated conversation'});
+  await rest(`/projects/${project}/dashboard`,alice.token,{operation:'send',targetSessionId:unrelated.session_id,requestId:crypto.randomUUID(),text:'Must not reach the other Claude conversation'});
+  await recoveredChannel.check();assert.equal(recoveredEvents.length,1);
+  await call(clientA,'relay_close',{session_key:unrelated.session_key});
+  await channelCall('relay_ack',{session_key:channelSession.session_key,event_id:offlineQuestion});
+  await channelCall('relay_close',{session_key:channelSession.session_key});
+  await assert.rejects(channelCall('relay_open',{provider:'claude',task:'Closed channel'}),/stopped/);
+  const proxyConfig=resolve(temp.dir,'proxy-connection.json');writeFileSync(proxyConfig,JSON.stringify({server,projectId:project,token:alice.token}));
+  const proxy=new Client({name:'relay-companion-proxy-test',version:'1.0.0'},{capabilities:{}});
+  clients.push(proxy);await proxy.connect(new StdioClientTransport({command:process.execPath,args:[resolve('out/node/remote-companion-mcp.js'),proxyConfig],stderr:'pipe'}));
+  assert.equal((await proxy.listTools()).tools.length,10);await proxy.close();
+  const a=await call(clientA,'relay_open',{provider:'codex',task:'Pagination in project A'});
+  const invitation=await call(clientA,'relay_invite',{session_key:a.session_key});
+  const link=new URL(invitation.result.join_url),details=JSON.parse(decodeURIComponent(link.hash.slice(1)));
+  const page=await fetch(server+'/connect');assert.equal(page.status,200);assert.match(await page.text(),/No download/);
+  assert.equal((await fetch(server+`/projects/${project}/enroll`,{method:'POST',headers:{Origin:'https://evil.test','Content-Type':'application/json'},body:JSON.stringify({name:'Eve',code:details.code})})).status,403);
+  const bob=await rest(`/projects/${project}/enroll`,'',{name:'Bob',code:details.code,repository:'project-B'},server);
+  const clientB=await connect(bob.token),b=await call(clientB,'relay_open',{provider:'claude',task:'Pagination in project B'});
+  await call(clientA,'relay_check',{session_key:a.session_key,native_session_id:'sdk-native-codex'});
+  const hookQuestion=crypto.randomUUID();
+  await call(clientB,'relay_ask',{session_key:b.session_key,target_session_id:a.session_id,request_id:hookQuestion,question:'Question arriving during a Codex turn'});
+  const hook=await call(clientA,'relay_hook',{native_session_id:'sdk-native-codex',hook_event_name:'Stop',stop_hook_active:false});
+  assert.equal(hook.decision,'block');assert.match(hook.reason,/Question arriving during/);
+  assert.deepEqual(await call(clientA,'relay_hook',{native_session_id:'sdk-native-codex',hook_event_name:'Stop',stop_hook_active:true}),{});
+  const hookReply=await call(clientA,'relay_reply',{session_key:a.session_key,question_id:hookQuestion,request_id:crypto.randomUUID(),answer:'Answered after the lifecycle hook'});
+  assert.equal((await call(clientB,'relay_status',{session_key:b.session_key,event_id:hookQuestion})).result.receipts[0].state,'answered');
+  await call(clientB,'relay_ack',{session_key:b.session_key,event_id:hookReply.result.event_id});
+  const nativeCalls:{id:string;text:string}[]=[];
+  companion=await startCompanion({server,projectId:project,token:alice.token},{budget:new ClientBudget(resolve(temp.dir,'companion-budget.sqlite3')),localSessions:()=>new Set(['sdk-native-codex']),queue:async(id,text)=>{nativeCalls.push({id,text});return true;},log:()=>{}});
+  const companionQuestion=crypto.randomUUID();
+  await call(clientB,'relay_ask',{session_key:b.session_key,target_session_id:a.session_id,request_id:companionQuestion,question:'Wake the existing native session'});
+  const wakeDeadline=Date.now()+5000;while(!nativeCalls.length&&Date.now()<wakeDeadline)await new Promise(done=>setTimeout(done,25));
+  assert.equal(nativeCalls.length,1);assert.equal(nativeCalls[0]!.id,'sdk-native-codex');assert.match(nativeCalls[0]!.text,/relay_check/);
+  await companion.sync();assert.equal(nativeCalls.length,1,'Reconnection must not duplicate native handoff');
+  const companionInbox=await call(clientA,'relay_check',{session_key:a.session_key});assert.ok(companionInbox.inbox.messages.some((m:any)=>m.id===companionQuestion));
+  const companionReply=await call(clientA,'relay_reply',{session_key:a.session_key,question_id:companionQuestion,request_id:crypto.randomUUID(),answer:'Companion handoff verified'});
+  await call(clientB,'relay_check',{session_key:b.session_key});
+  await call(clientB,'relay_ack',{session_key:b.session_key,event_id:companionReply.result.event_id});
+  companion.stop();companion=undefined;
+  const dashboard=(token:string,body:unknown)=>rest(`/projects/${project}/dashboard`,token,body,server);
+  const liveTicket=await dashboard(alice.token,{operation:'ticket'});
+  const liveSocket=new WebSocket(`${server.replace('http:','ws:')}/projects/${project}/live?ticket=${liveTicket.ticket}`,{headers:{Origin:server}});sockets.push(liveSocket);
+  const liveMessages:any[]=[];liveSocket.on('message',data=>{if(data.toString()!=='pong')liveMessages.push(JSON.parse(data.toString()));});
+  await new Promise<void>((done,reject)=>{liveSocket.once('open',done);liveSocket.once('error',reject);});
+  const roomQuestion=crypto.randomUUID();
+  await dashboard(alice.token,{operation:'send',targetSessionId:b.session_id,requestId:roomQuestion,text:'Browser question: explain the cursor.'});
+  const browserInbox=await call(clientB,'relay_check',{session_key:b.session_key});assert.ok(browserInbox.inbox.messages.some((m:any)=>m.id===roomQuestion&&m.sessionId==='human_'+alice.memberId));
+  await call(clientB,'relay_reply',{session_key:b.session_key,question_id:roomQuestion,request_id:crypto.randomUUID(),answer:'Browser answer: use next_cursor.'});
+  const dashboardRead=await dashboard(alice.token,{operation:'read'});assert.ok(dashboardRead.events.some((e:any)=>e.text==='Browser answer: use next_cursor.'));
+  assert.equal(dashboardRead.receipts.find((r:any)=>r.eventId===roomQuestion).state,'answered');
+  assert.ok(liveMessages.some(m=>m.type==='changed'));
+  const closeTicket=await dashboard(alice.token,{operation:'ticket'});
+  const closing=new WebSocket(`${server.replace('http:','ws:')}/projects/${project}/live?ticket=${closeTicket.ticket}`,{headers:{Origin:server}});sockets.push(closing);
+  await new Promise<void>((done,reject)=>{closing.once('open',done);closing.once('error',reject);});
+  const closed=new Promise<void>(done=>closing.once('close',()=>done()));closing.close();await closed;
+  const app=await fetch(server+'/app');assert.equal(app.status,200);assert.match(await app.text(),/Shared room/);
+  const discovery=await call(clientA,'relay_discover',{session_key:a.session_key,person:'Bob'});assert.equal(discovery.result.sessions[0].id,b.session_id);
+  const q=crypto.randomUUID(),question={session_key:a.session_key,target_session_id:b.session_id,request_id:q,question:'Which cursor do you use?'};
+  assert.equal((await call(clientA,'relay_ask',question)).result.receipt.state,'queued');await call(clientA,'relay_ask',question);
+  const pending=await call(clientB,'relay_check',{session_key:b.session_key});assert.equal(pending.inbox.messages.length,1);
+  await call(clientB,'relay_reply',{session_key:b.session_key,question_id:q,request_id:crypto.randomUUID(),answer:'The cursor returned by the previous page.'});
+  assert.match((await call(clientA,'relay_check',{session_key:a.session_key})).inbox.messages[0].text,/previous page/);
+  assert.equal((await call(clientA,'relay_status',{session_key:a.session_key,event_id:q})).result.receipts[0].state,'answered');
+  const reconnected=await connect(alice.token);assert.equal((await call(reconnected,'relay_check',{session_key:a.session_key})).result.session_id,a.session_id);
+  const other=crypto.randomUUID();await rest(`/projects/${other}/create`,key,{name:'Other',ownerName:'Other',repository:'network:other',mode:'network'});
+  assert.equal((await fetch(`${server}/projects/${other}/mcp`,{headers:{Authorization:'Bearer '+alice.token}})).status,401);
+  await rest(`/projects/${project}/revoke`,alice.token,{memberId:bob.memberId});
+  assert.equal((await fetch(`${server}/projects/${project}/mcp`,{headers:{Authorization:'Bearer '+bob.token}})).status,401);
+  const budget=await rest('/budget/status',key);await rest('/budget/reconcile',key,{used:9_500_000,periodStart:budget.periodStart});
+  assert.equal((await fetch(`${server}/projects/${project}/mcp`,{headers:{Authorization:'Bearer '+alice.token}})).status,429);
+  assert.equal((await fetch(server+'/connect')).status,429);
+  assert.equal((await fetch(server+'/app')).status,429);
+  const pauseDeadline=Date.now()+3000;while(!liveMessages.some(m=>m.type==='budget_paused')&&Date.now()<pauseDeadline)await new Promise(done=>setTimeout(done,20));
+  assert.ok(liveMessages.some(m=>m.type==='budget_paused'));
+  assert.ok(!log.includes('Invalid WebSocket close code'),log);
+  console.log('PASS: official MCP SDK clients exchanged a question/reply through a local Cloudflare Worker. Claude channel push, key isolation, reconnect replay and duplicate suppression passed. Invitation enrollment, cross-network isolation, revocation and shared-budget pause verified. No models or real peers contacted.');
+} finally {
+  recoveredChannel?.stop();
+  companion?.stop();
+  for(const socket of sockets)socket.terminate();
+  for(const client of clients)await client.close().catch(()=>{});
+  if(child.pid&&child.exitCode===null){try{if(process.platform==='win32')execFileSync('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});else process.kill(-child.pid,'SIGTERM');}catch{}await new Promise<void>(done=>{if(child.exitCode!==null)done();else child.once('exit',()=>done());});}
+  // Windows may release workerd's SQLite handles shortly after taskkill returns.
+  for(let attempt=0;;attempt++)try{temp.cleanup();break;}catch(error){if(attempt===15||!['EBUSY','ENOTEMPTY','EPERM'].includes((error as NodeJS.ErrnoException).code??''))throw error;await new Promise(done=>setTimeout(done,200));}
+}

@@ -1,0 +1,33 @@
+name: Release Relay beta
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          pattern: relay-setup-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish verified beta artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          test "$RELEASE_TAG" = "v$(node -p 'require("./package.json").version')"
+          gh release create "$RELEASE_TAG" release-assets/* --verify-tag --prerelease --title "Relay $RELEASE_TAG" --notes-file .github/RELEASE_NOTES.md

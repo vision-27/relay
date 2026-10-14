@@ -1,5 +1,17 @@
 # Relay Next setup and acceptance
 
+This guide covers the advanced repository connector and service operation.
+For the current friend-to-friend setup, start with [Easy setup](EASY_SETUP.md).
+
+Use the [shared room](SHARED_ROOM.md) to see connected agent sessions, follow
+shared conversations live, and ask an agent a question from your browser.
+
+For agents working at the same time in any workspace, use the
+[hosted Relay MCP](REMOTE_MCP.md): add its URL and membership token to your client,
+then discover peers and exchange questions through MCP. No Relay download is
+required. The [local connector](NETWORK.md) is optional. The repository connection below
+continues to support shared project context and code collaboration.
+
 ## Runtime and development
 
 Node.js 22.13+ (tested with 22.20.0), Git, and your coding clients. Node 22 reports its SQLite API as experimental. No separate local database install is required.
@@ -57,6 +69,8 @@ Git remotes establish shared identity, with SSH/HTTPS forms normalized. A reposi
 Config, native inbox credentials, SQLite and connector logs live in `.relay/next/`, excluded from Git. The installer merges project-local hooks and MCP config, backing up previous files in `.relay/next/config-backups/`. Global coding-client settings are not changed. Resume the session, then approve the client's hook/MCP trust prompts. No trust or permission bypass flags are installed.
 
 New hooked sessions in this repository register automatically. Other repositories do not register through this project's hooks. Direct questions address a stable session ID, not a pane label.
+
+Project owners can delegate device/member invitations to an admin. Run `relay-next members`, then `relay-next member-role --member MEMBER_ID --role admin`. Use `--role member` to remove admin permissions. Role changes are recorded in the project database. Admins can use the existing `relay-next invite` command and revoke ordinary members; only the owner can change roles or revoke admins. Invitations still enroll ordinary members. This grants no service-wide project creation permission or authority over another member's agent sessions. Existing clients can invite immediately after server-side promotion without reinstalling.
 
 When cmux/wmux exposes a local control endpoint and exact pane identity, Relay adds an online/offline sidebar indicator. This is optional; terminal permissions are respected and no keystrokes or focus changes are used for delivery.
 

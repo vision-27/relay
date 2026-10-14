@@ -1,19 +1,19 @@
 export type Provider = 'codex' | 'claude';
-export type Kind = 'intent' | 'decision' | 'contract' | 'observation' | 'test' | 'question' | 'reply';
+export type Kind = 'intent' | 'decision' | 'contract' | 'observation' | 'test' | 'question' | 'reply' | 'artifact' | 'integration';
 export type DeliveryState = 'queued' | 'accepted' | 'delivered' | 'answered' | 'uncertain' | 'held';
 export interface GitState {
   head: string | null; branch: string | null; dirty: boolean;
   files: string[]; fingerprint: string; repository: string;
 }
 export interface Session {
-  id: string; memberId: string; provider: Provider; sourceId: string; name: string;
+  id: string; memberId: string; provider: Provider | 'human'; sourceId: string; name: string;
   task: string; scopes: string[]; git: GitState; state: 'active' | 'idle' | 'blocked' | 'closed';
   updatedAt: string;
 }
 export interface EventInput {
   id: string; sessionId: string; kind: Kind; text: string; paths: string[];
   targetSessionId?: string; replyTo?: string; supersedes?: string;
-  evidence?: string; urgent?: boolean;
+  evidence?: string; urgent?: boolean; phase?: 'progress'|'final'; artifactId?:string;
   git?: GitState; occurredAt?:string;
 }
 export interface RelayEvent extends EventInput {
@@ -22,7 +22,7 @@ export interface RelayEvent extends EventInput {
 export interface Receipt {
   eventId: string; sessionId: string; state: DeliveryState; detail: string; updatedAt: string;
 }
-export interface Member { id: string; name: string; role: 'owner' | 'member' }
+export interface Member { id: string; name: string; role: 'owner' | 'admin' | 'member' }
 export interface Sql {
   all<T extends object = Record<string, unknown>>(sql: string, ...values: (string | number | null)[]): T[];
   exec(sql: string, ...values: (string | number | null)[]): void;
@@ -53,6 +53,7 @@ export function paths(value: unknown): string[] {
 export const fresh = (session: Session, now = Date.now()) => session.state !== 'closed' && now - Date.parse(session.updatedAt) < 90_000;
 export const overlap = (a: string, b: string) => a === b || a.startsWith(b.replace(/\/$/, '') + '/') || b.startsWith(a.replace(/\/$/, '') + '/');
 export function redact(text: string): string {
+  text=text.replace(/\brelay_session_[a-f0-9]{64}\b/g,'[REDACTED SESSION KEY]');
   return text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g,'').replace(/\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9_]{12,}|github_pat_[A-Za-z0-9_]{12,})\b/g, '[REDACTED]')
     .replace(/\b(?:Bearer\s+)[A-Za-z0-9_.+/=-]{12,}/gi, 'Bearer [REDACTED]')
     .replace(/((?:api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token)\s*[:=]\s*)[^\s,;]+/gi, '$1[REDACTED]')

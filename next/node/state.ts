@@ -2,8 +2,8 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync, chmodSy
 import { join, resolve } from 'node:path';
 import { SQLite } from './sqlite.js';
 import type { EventInput, RelayEvent, Session } from '../core/types.js';
-export interface Connection { server:string; projectId:string; memberId:string; token:string; repository:string; name:string; repo:string }
-export interface Binding extends Session { endpoint?:string; inboxToken?:string; transcriptPath?:string; hookSeenAt?:number; terminal?:{kind:'cmux'|'wmux';surface:string;workspace?:string;socket?:string;token?:string}; }
+export interface Connection { server:string; projectId:string; memberId:string; token:string; repository:string; name:string; repo:string; mode?:'repository'|'network' }
+export interface Binding extends Session { workspace?:string; sessionKey?:string; endpoint?:string; inboxToken?:string; transcriptPath?:string; hookSeenAt?:number; terminal?:{kind:'cmux'|'wmux';surface:string;workspace?:string;socket?:string;token?:string}; }
 export interface Job { id:string; action:string; body:unknown }
 export class State {
   readonly sql: SQLite;
@@ -19,9 +19,12 @@ export class State {
       'CREATE TABLE IF NOT EXISTS supersessions(previous_id TEXT PRIMARY KEY,replacement_id TEXT NOT NULL)',
       'CREATE VIRTUAL TABLE IF NOT EXISTS history_search USING fts5(event_id UNINDEXED, text, paths)',
       'CREATE TABLE IF NOT EXISTS delivery(event_id TEXT NOT NULL,session_id TEXT NOT NULL,state TEXT NOT NULL,detail TEXT NOT NULL,PRIMARY KEY(event_id,session_id))',
+      'CREATE TABLE IF NOT EXISTS metrics(name TEXT PRIMARY KEY,count INTEGER NOT NULL,chars INTEGER NOT NULL,bytes INTEGER NOT NULL)',
       'CREATE TABLE IF NOT EXISTS supplied(session_id TEXT NOT NULL,event_id TEXT NOT NULL,PRIMARY KEY(session_id,event_id))'
     ]) this.sql.exec(statement);
   }
+  measure(name:string,value:string){this.sql.exec('INSERT INTO metrics VALUES (?,1,?,?) ON CONFLICT(name) DO UPDATE SET count=count+1,chars=chars+excluded.chars,bytes=bytes+excluded.bytes',name,value.length,Buffer.byteLength(value));}
+  metrics(){return this.sql.all('SELECT name,count,chars,bytes FROM metrics ORDER BY name');}
   get<T>(key:string):T|undefined { const row=this.sql.all<{value:string}>('SELECT value FROM kv WHERE key=?',key)[0]; return row?JSON.parse(row.value):undefined; }
   set(key:string,value:unknown) { this.sql.exec('INSERT INTO kv VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',key,JSON.stringify(value)); }
   bindings(): Binding[] { return this.sql.all<{data:string}>('SELECT data FROM bindings').map(r=>JSON.parse(r.data)); }
@@ -60,7 +63,7 @@ export class State {
     const terms=query.match(/[\p{L}\p{N}_]+/gu)?.slice(0,12).map(t=>'"'+t+'"').join(' OR ');if(!terms)return [];
     return this.sql.all<{data:string}>('SELECT c.data FROM history_search h JOIN cache c ON c.id=h.event_id WHERE history_search MATCH ? ORDER BY rank LIMIT 100',terms).map(r=>JSON.parse(r.data));
   }
-  messages(sessionId:string):RelayEvent[]{return this.sql.all<{data:string}>("SELECT c.data FROM cache c LEFT JOIN delivery d ON d.event_id=c.id AND d.session_id=? WHERE json_extract(c.data,'$.targetSessionId')=? AND (d.state IS NULL OR d.state='held') ORDER BY c.seq LIMIT 50",sessionId,sessionId).map(r=>JSON.parse(r.data));}
+  messages(sessionId:string):RelayEvent[]{return this.sql.all<{data:string}>("SELECT c.data FROM cache c LEFT JOIN delivery d ON d.event_id=c.id AND d.session_id=? WHERE json_extract(c.data,'$.targetSessionId')=? AND (json_extract(c.data,'$.phase') IS NULL OR json_extract(c.data,'$.phase')!='progress' OR json_extract(c.data,'$.urgent')=1) AND (d.state IS NULL OR d.state='held') ORDER BY c.seq LIMIT 50",sessionId,sessionId).map(r=>JSON.parse(r.data));}
   delivery(eventId:string,sessionId:string) { return this.sql.all<{state:string;detail:string}>('SELECT state,detail FROM delivery WHERE event_id=? AND session_id=?',eventId,sessionId)[0]; }
   mark(eventId:string,sessionId:string,status:string,detail='') {
     const previous=this.delivery(eventId,sessionId);
@@ -86,5 +89,5 @@ export function saveConnection(dir:string,config:Connection) {
   if(process.platform!=='win32') chmodSync(target,0o600);
 }
 export function publicSession(binding:Binding):Session {
-  const {endpoint:_,inboxToken:__,transcriptPath:___,hookSeenAt:____,terminal:_____,...session}=binding; return session;
+  const {endpoint:_,inboxToken:__,transcriptPath:___,hookSeenAt:____,terminal:_____,workspace:______,sessionKey:_______,...session}=binding; return session;
 }

@@ -1,3 +1,4 @@
+import { collaborationProbe } from './collaboration-probe.js';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
 import { api } from '../node/client.js';
@@ -24,6 +25,7 @@ try {
   const snapshot=await api<any>(server,project,a.token,'snapshot');assert.equal(snapshot.receipts.find((r:any)=>r.eventId===sent.id).state,'answered');
   await assert.rejects(api(server,crypto.randomUUID(),a.token,'snapshot'),/revoked|expired|not found/i);
   assert.ok(notifications>0);
+  console.log('Collaboration protocol:',await collaborationProbe(server,project,a,b,alice,bob));
   const closed=new Promise<number>(resolve=>socket.once('close',code=>resolve(code)));
   await api(server,project,a.token,'revoke',{memberId:b.memberId});
   assert.equal(await closed,1008);await assert.rejects(api(server,project,b.token,'snapshot'),/revoked/);

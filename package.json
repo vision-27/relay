@@ -1,6 +1,6 @@
 {
   "name": "@relay-workspace/cli",
-  "version": "0.7.0-alpha.1",
+  "version": "0.8.0-alpha.10",
   "private": true,
   "description": "Shared context for the coding sessions you already use.",
   "type": "module",
@@ -8,14 +8,17 @@
     "node": ">=22.13"
   },
   "bin": {
-    "relay-next": "out/node/cli.js"
+    "relay": "out/node/cli.js",
+    "relay-next": "out/node/cli.js",
+    "relay-claude-channel": "out/node/claude-channel.js"
   },
   "files": [
     "out/core",
     "out/node",
-    "next/README.md",
-    "next/BACKEND_DECISION.md",
-    "next/VERIFICATION.md"
+    "next/EASY_SETUP.md",
+    "next/TROUBLESHOOTING.md",
+    "next/REMOTE_MCP.md",
+    "next/CLAUDE_CHANNEL.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -25,20 +28,35 @@
     "connect:hosted": "node out/node/hosted-connect.js",
     "demo": "npm run build && node out/tests/demo.js",
     "test:worker": "node out/tests/worker-smoke.js",
+    "test:network-worker": "node out/tests/network-worker-smoke.js",
+    "test:remote-mcp-worker": "npm run build && node out/tests/remote-mcp-worker-smoke.js",
+    "test:package-setup": "npm run build && node out/tests/package-setup-smoke.js",
+    "build:desktop": "npm run build && node out/tests/build-desktop.js",
     "test:hosted": "npm run build && node out/tests/hosted-smoke.js",
     "test:native": "npm run build && node out/tests/native-smoke.js",
     "prepack": "npm run build",
     "worker:dev": "wrangler dev --config next/worker/wrangler.jsonc",
-    "worker:deploy": "wrangler deploy --config next/worker/wrangler.jsonc"
+    "worker:deploy": "wrangler deploy --config next/worker/wrangler.jsonc",
+    "package:release": "npm run build && node out/tests/package-release.js"
   },
   "dependencies": {
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260928.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@types/node": "^22.20.4",
     "@types/ws": "^8.18.1",
     "typescript": "^5.9.3",
     "wrangler": "^4.142.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vision-27/relay.git"
+  },
+  "homepage": "https://github.com/vision-27/relay#readme",
+  "bugs": {
+    "url": "https://github.com/vision-27/relay/issues"
+  },
+  "license": "UNLICENSED"
 }

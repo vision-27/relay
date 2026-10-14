@@ -2,12 +2,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, copyFil
 import { dirname, join } from 'node:path';
 import type { Provider } from '../core/types.js';
 import { stateDir } from './state.js';
-function write(path:string,text:string,backupDir:string){
+export function writeConfig(path:string,text:string,backupDir:string){
   mkdirSync(dirname(path),{recursive:true});mkdirSync(backupDir,{recursive:true,mode:0o700});
   if(existsSync(path))copyFileSync(path,join(backupDir,`${Date.now()}-${crypto.randomUUID()}.json`));
   const temp=path+`.relay-${crypto.randomUUID()}.tmp`;writeFileSync(temp,text,{mode:0o600});renameSync(temp,path);
 }
-function quote(value:string){
+export function quote(value:string){
   if(process.platform==='win32'){
     if(/["\r\n%`$]/.test(value))throw new Error('This install path needs manual hook configuration because it contains shell metacharacters');
     return `"${value}"`;
@@ -46,6 +46,6 @@ export function install(repo:string,provider:Provider,cli:string,node=process.ex
   const ignore=join(repo,'.gitignore'),original=existsSync(ignore)?readFileSync(ignore,'utf8'):'';
   const add=['.relay/','.mcp.json','.claude/settings.local.json','.codex/hooks.json','.codex/config.toml'].filter(p=>!original.split(/\r?\n/).includes(p));
   if(add.length)updates.push({path:ignore,text:original+(original.endsWith('\n')?'':'\n')+'\n# Relay local connection and agent integration\n'+add.join('\n')+'\n'});
-  for(const update of updates)write(update.path,update.text,backup);
+  for(const update of updates)writeConfig(update.path,update.text,backup);
   return {provider,files:[path],next:'Resume your coding session and approve the Relay MCP/hooks when prompted by the coding client.'};
 }

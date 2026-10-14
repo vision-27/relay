@@ -19,6 +19,8 @@ node_modules/
 out/
 .wrangler/
 *.tgz
+/relay-access-question.mjs
+/relay-review-send.mjs
 
 # Relay local connection and agent integration
 .mcp.json

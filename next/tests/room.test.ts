@@ -56,3 +56,40 @@ test('HTTP rejects oversized bodies and invalid replay cursors',async t=>{
   const invalid=await routeRoom(room,new Request('http://local/events?after=-1',{headers}),'events');assert.equal(invalid.status,400);
   const large=await routeRoom(room,new Request('http://local/events',{method:'POST',headers,body:'x'.repeat(40_001)}),'events');assert.equal(large.status,413);
 });
+
+test('expired reservations can be reclaimed but cannot be completed by another owner',async t=>{
+  const {room,db,member,peer,a,b}=await fixture(t);const lease=room.collaboration.mutateTask(member,{sessionId:a.id,title:'Original',paths:['src'],ttlSeconds:60});
+  const expired={...lease,expiresAt:Date.now()-1};db.exec('UPDATE tasks SET data=? WHERE id=?',JSON.stringify(expired),lease.id);
+  assert.throws(()=>room.collaboration.mutateTask(peer,{sessionId:b.id,operation:'complete',id:lease.id,version:lease.version}),/another session/);
+  const claimed=room.collaboration.mutateTask(peer,{sessionId:b.id,operation:'claim',id:lease.id,version:lease.version});assert.equal(claimed.sessionId,b.id);assert.equal(claimed.version,lease.version+1);
+});
+
+test('owner delegates invitations without granting ownership or session impersonation',async t=>{
+  const {room,db,member,peer,owner,joined,a}=await fixture(t);
+  const request=(token:string,body:unknown)=>routeRoom(room,new Request('http://local/members',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(body)}),'members');
+  assert.equal((await request(joined.token,{memberId:peer.id,role:'admin'})).status,403);
+  assert.equal((await request(owner.token,{memberId:peer.id,role:'owner'})).status,400);
+  assert.equal((await request(owner.token,{memberId:member.id,role:'member'})).status,403);
+  assert.equal((await request(owner.token,{memberId:crypto.randomUUID(),role:'admin'})).status,404);
+  await assert.rejects(room.invite(peer),/owner or an admin/);
+  assert.equal((await request(owner.token,{memberId:peer.id,role:'admin'})).status,200);
+  const admin=await room.authenticate(joined.token);assert.equal(admin.role,'admin');
+  const invitation=await room.invite(admin);
+  const third=await room.join(invitation.code,'Windows',code.repository);
+  const ordinary=await room.authenticate(third.token);assert.equal(ordinary.role,'member');
+  await assert.rejects(room.join(invitation.code,'Reuse',code.repository),/already used/);
+  assert.throws(()=>room.own(admin,a.id),/another member/);
+  assert.equal((await request(joined.token,{memberId:third.memberId,role:'admin'})).status,403);
+  assert.throws(()=>room.revoke(admin,member.id),/Only the owner/);
+  assert.throws(()=>room.revoke(admin,admin.id),/Only the owner/);
+  room.setMemberRole(member,ordinary.id,'admin');
+  assert.throws(()=>room.revoke(admin,ordinary.id),/Only the owner/);
+  room.setMemberRole(member,ordinary.id,'member');room.revoke(admin,ordinary.id);
+  await assert.rejects(room.authenticate(third.token),/revoked/);
+  assert.equal((await request(owner.token,{memberId:ordinary.id,role:'admin'})).status,404);
+  room.setMemberRole(member,peer.id,'admin');
+  assert.equal(db.all('SELECT * FROM membership_audit').length,3);
+  assert.equal((await request(owner.token,{memberId:peer.id,role:'member'})).status,200);
+  await assert.rejects(room.invite(await room.authenticate(joined.token)),/owner or an admin/);
+  assert.equal(db.all('SELECT * FROM membership_audit').length,4);
+});
