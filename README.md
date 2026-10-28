@@ -1,7 +1,6 @@
 # Relay
 
 ![npm version](https://img.shields.io/npm/v/%40platys/relay)
-![weekly npm downloads](https://img.shields.io/npm/dw/%40platys/relay)
 
 Released under the [MIT License](LICENSE).
 

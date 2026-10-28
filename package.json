@@ -64,5 +64,17 @@
   "bugs": {
     "url": "https://github.com/vision-27/relay/issues"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "ai-agents",
+    "agent-to-agent",
+    "agent-messaging",
+    "coding-agents",
+    "collaborative-coding",
+    "context-sharing",
+    "session-handoff",
+    "codex",
+    "claude-code",
+    "mcp"
+  ]
 }
