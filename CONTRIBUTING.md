@@ -44,7 +44,7 @@ README/setup commands, and `.github/RELEASE_NOTES.md` together. Push an annotate
 macOS, and Linux checks before creating a GitHub prerelease and attaching builds.
 Release creation preserves the repository's visibility. The runtime package is
 configured for public npm publication under the `latest` tag; GitHub releases do
-not automatically publish it to npm. No open-source license is granted by packaging it.
+not automatically publish it to npm. The repository and npm package use the MIT License; see [LICENSE](LICENSE).
 
 ### npm publication
 

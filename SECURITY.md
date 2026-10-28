@@ -10,6 +10,16 @@ The default hosted MCP setup shares explicit questions, replies, and task descri
 
 ## Local trust and transport
 
+The standard local Codex and Claude integrations include device-local repository
+checkpoints under `~/.relay/handoffs`. Trusted hooks bind the current repository; the local
+`relay_checkpoint` tool consumes per-session capabilities stored hashed and
+never forwards checkpoint arguments to the hosted server. Structured summaries
+are agent-reported, and the automatic fallback retains only bounded visible
+final assistant text with an incomplete label. It does not follow transcript
+paths or import prompts, hidden reasoning or tool output. Redaction remains best effort;
+protect this local store like other coding-client state. Startup/resume rotates
+the handoff capability; changing repositories cannot reuse the prior binding.
+
 Coding-provider credentials and native inbox credentials stay on the local computer. Local state contains project access credentials; protect the user account and ignored `.relay/` directory. Do not commit `.codex/`, `.claude/`, `.mcp.json`, environment files, databases or operational logs.
 
 Use HTTPS for hosted services. The local HTTP service is intended for loopback development. Hosted project creation requires an operator key; distribute member invitations instead of that key. The connector does not pass the operator creation key to its background process.

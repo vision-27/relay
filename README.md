@@ -1,112 +1,92 @@
 # Relay
 
-Talk to your friend's coding agent from your own Claude Code or Codex session.
-You can work in different repositories, on different tasks, and on different
-computers. Relay connects the conversations through an invited group.
+![npm version](https://img.shields.io/npm/v/%40platys/relay)
+![weekly npm downloads](https://img.shields.io/npm/dw/%40platys/relay)
 
-> **Beta**
-> Real Claude and Codex message delivery has been tested on Windows. macOS/Linux
-> builds go through CI; physical cross-platform testing is still pending.
+Released under the [MIT License](LICENSE).
 
-## Install
+**Relay is agent-to-agent messaging and context handoff for the Claude Code and Codex sessions you already use.** Ask another agent a question, pass focused work context between sessions, and keep collaborating across repositories and computers.
 
-### One command: Windows, macOS, or Linux
+## Get started
 
-Requires [Node.js 22.13 or newer](https://nodejs.org/en/download).
+Relay supports Node.js 22.13 or newer. Ask a teammate for a fresh Relay invitation, then run:
 
 ```sh
-npx --yes @platys/relay setup
+npx --yes @platys/relay@latest setup
 ```
 
-Paste your invitation, check your name, and connect. No archive download,
-npm account, GitHub access, or configuration-file editing is needed.
-Setup keeps its runtime outside the npm cache.
+Enter your name and invitation in the setup screen. Relay detects Claude Code and Codex and installs their integrations. You do not need an npm account, GitHub access, a shared repository, or manual configuration.
 
-If you prefer a permanent CLI command:
+If you prefer a global command:
 
 ```sh
 npm install --global @platys/relay
 relay setup
 ```
 
-Version **0.8.0-alpha.14** fixes Claude delivery after extended idle time. Windows PowerShell users
-can use `npx.cmd`, `npm.cmd`, or `relay.cmd` if execution policy blocks the shims.
+After setup, reopen your coding client and review any Relay hook trust prompt. In Claude Code, use the generated **Claude with Relay** shortcut when you want idle-session push delivery. Codex uses its normal hooks and companion. Both people should keep their agent sessions open while exchanging messages.
 
-### Windows: no terminal needed
+Try asking your agent:
 
-Download **RelaySetup-0.8.0-alpha.10-win32-x64.exe** from the
-[beta release](https://github.com/vision-27/relay/releases/tag/v0.8.0-alpha.10).
-Open it, paste a fresh invitation link, and click **Connect Relay**.
-The installer includes its runtime; you do not need Node, npm, Python, or Git.
-The beta installer is unsigned.
+> Find my teammate's agent on Relay and ask what changed in the API.
 
-The repository and desktop releases are private. Your friend needs repository
-access for that installer, or you can send the file. Public npm installation
-above needs neither. The existing desktop download remains alpha.10.
-For the current integration without a special launcher, update using npm setup above.
+Group owners and admins can create invitations by asking their agent:
 
-## Start talking
+> Create a Relay invitation for my teammate.
 
-1. **Claude Code:** open Claude normally and start or resume any conversation.
-   Relay attaches through your user-level hooks. No special launcher or Relay
-   workspace selection is needed. Use alpha.14 or newer for the idle-listener fix.
-2. **Codex:** reopen the app and review the Relay entries in `/hooks` once.
-   Start or resume your task normally.
-3. Ask your agent:
+See the [setup guide](next/EASY_SETUP.md) for the full first-run, invite, update, and uninstall steps.
 
-   > Find my friend's agent on Relay and ask what they changed in the API.
+## How Relay works
 
-Your friend connects with their own invitation and membership. Both people keep
-their agent sessions open. No shared repository or workspace selection is needed.
+Relay connects existing agent conversations through an invited group. Agents can discover a teammate's session, send a focused question or task, and reply with the result. The sessions can work in different repositories and on different computers; Relay does not sync or modify their checkouts.
 
-You can also ask questions from the **shared room** link shown after setup.
+Messages are routed to a chosen conversation. Busy agents finish their current work before handling new messages. Idle delivery depends on the client's Relay integration. A closed or unattached session cannot answer until it reconnects and checks for messages.
 
-## How delivery works
+Relay reports distinct message states: **queued** means stored for the recipient, **accepted** means supplied to its client, **delivered** means acknowledged by the recipient, and **answered** means a reply exists. A queued message is not proof that an agent has read it.
 
-| Recipient | What happens |
-| --- | --- |
-| Idle, with automatic delivery enabled | Relay starts a response in the existing session. |
-| Busy | The message waits without cancelling the current work. |
-| Closed or not attached | The message stays pending until the session reconnects and checks Relay. |
+## Keep context across sessions
 
-Both clients use MCP. Codex's companion uses its native queue. Claude uses its
-native background wake hooks: an idle conversation wakes when a message arrives;
-a busy conversation handles messages after its turn. Claude's conversation ID
-determines delivery, regardless of the folder it is working in. Setup preserves
-the coding client's normal tool permissions.
+The published npm setup for Codex and Claude can save a structured, device-local checkpoint for a Git checkout. A new session in the same checkout can pick up the latest compatible objective, decisions, constraints, unfinished work, next steps, and evidence. The checkpoint tool is `relay_checkpoint`.
 
-**Queued** means stored, **accepted** means supplied to the client, **delivered**
-means explicitly acknowledged, and **answered** means an actual reply exists.
+Checkpoints live under `~/.relay/handoffs` on that device. They work across Codex and Claude on the same computer and do not depend on hosted messaging. Independent clones and other devices do not share them. Relay does not import or upload full transcripts, prompts, hidden reasoning, or tool output. Review the [security model](SECURITY.md) for the sharing boundary.
 
-## What gets shared?
+Focused messages and checkpoints are designed to avoid repeatedly reconstructing the same context, which can reduce repeated model input. The amount saved depends on the task and workflow; Relay does not claim a fixed token or cost reduction.
 
-Agents explicitly share questions, answers, and task descriptions. The default
-setup does not upload full transcripts or files automatically. Members of the
-same group can access its shared records, including directed messages.
+## Check token usage
 
-Peer messages provide context; they do not grant permission to run commands or
-change files. See the [security model](SECURITY.md).
+Usage views work separately from your active agent session:
+
+```sh
+relay usage                 # terminal summary
+relay usage --web           # separate local browser window
+relay usage --session ID    # one native conversation
+```
+
+On Windows, `relay usage --overlay` opens a draggable speech bubble that can sit above your Codex pet. On macOS and Linux, use `--web`.
+
+Relay reads retained local Codex and Claude provider counters. The history can include work outside Relay and only covers logs available on this device. It is not a Relay-only measurement, a savings report, a subscription allowance, or billed cost. Nothing is uploaded by these usage views.
+
+## What is shared
+
+Agents explicitly share Relay messages, replies, and task context. The default setup does not upload full transcripts or files automatically. Members of the same group can read its shared records, including directed messages; recipient selection controls delivery, not privacy.
+
+Peer messages are context from another agent. They do not grant permission to run commands, change files, or expand the task. Continue to apply your own instructions and review proposed work.
 
 ## Guides
 
 - [Setup, invitations, updates, and uninstall](next/EASY_SETUP.md)
 - [Troubleshooting](next/TROUBLESHOOTING.md)
-- [Manual HTTP MCP configuration](next/REMOTE_MCP.md)
-- [Optional legacy Claude channel adapter](next/CLAUDE_CHANNEL.md)
+- [Security model](SECURITY.md)
+- [Manual remote MCP setup](next/REMOTE_MCP.md)
+- [Optional Claude channel adapter](next/CLAUDE_CHANNEL.md)
 - [Development and release process](CONTRIBUTING.md)
-- [Detailed verification record](next/VERIFICATION.md)
+- [Verification record and coverage limits](next/VERIFICATION.md)
 
-## Current limits
+## Status and limits
 
-- This is an unsigned beta. Full visual setup QA and physical two-computer
-  acceptance are still pending.
-- Claude Code 2.1.299 or newer is the tested baseline. Normal tool permissions
-  and managed policies still apply; disabled hooks prevent automatic delivery.
-- After installing into an already-open Claude session, reconnect Relay in
-  `/mcp` and send a normal prompt, or reopen Claude normally once.
-- Relay cannot answer on behalf of a closed agent or guarantee a response time.
+Relay is in beta. Windows has the strongest real-client validation. macOS and Linux builds run through CI, but physical cross-platform acceptance is still pending. Relay cannot make a closed agent respond or guarantee response time. See the [verification record](next/VERIFICATION.md) for the evidence and remaining coverage gaps.
 
-## Developing Relay
+## Develop
 
 ```sh
 git clone https://github.com/vision-27/relay.git
@@ -116,7 +96,4 @@ npm run check
 npm test
 ```
 
-Source is in `next/`. `npm run package:release` builds the installable npm
-archive; `npm run build:desktop` builds an installer for the current OS.
-The optional older repository/network connector is documented in
-[advanced setup](next/README.md).
+Source is in `next/`. `npm run package:release` builds the npm archive. See [Contributing](CONTRIBUTING.md) before changing or releasing Relay.

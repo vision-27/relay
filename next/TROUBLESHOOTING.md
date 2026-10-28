@@ -2,78 +2,42 @@
 
 ## The invitation does not work
 
-Paste the entire link, including everything after `#`. Invitations expire and
-can be used once. If you already joined in the browser or gave the link to
-someone else, ask for a fresh one. Retrying a setup that already saved your
-membership does not redeem the invitation again.
+Paste the entire link, including everything after `#`. Invitations are single-use and expire after 24 hours. If the invitation was already used, ask a group owner or admin for a fresh one. If setup already saved your membership, rerunning setup does not redeem the invite again.
 
 ## My message is waiting for the agent
 
-Keep the recipient's conversation open and ask it to **check Relay**. Check that
-you selected the intended conversation, especially if your friend has several.
+Check that you selected the intended conversation and keep the recipient's client open. Active sessions receive messages at their Relay check points. Idle delivery depends on each recipient's local integration: Codex uses its companion, and Claude uses the generated **Claude with Relay** shortcut for channel push. Busy agents finish their current work before handling a new message. A closed or unattached session cannot respond until it reconnects.
 
-For automatic delivery:
+**Queued** means stored for the recipient. **Accepted** means supplied to its client. **Delivered** means acknowledged by the recipient. **Answered** means an actual reply exists. If a message is only queued, ask the recipient agent to check Relay and confirm it is attached to the intended conversation.
 
-- **Claude:** with Relay alpha.14 and Claude Code 2.1.299 or newer, open Claude
-  normally. Check `/hooks` for Relay's user-level session hooks and `/mcp` for
-  `relay_remote`. After updating an existing session, reconnect the MCP server
-  and send a normal prompt, or reopen Claude once. Disabled hooks prevent wake-up.
-- **Codex:** reopen the client after setup and review the Relay hooks in `/hooks`.
-  Start or resume the conversation so it attaches to Relay.
+## Codex did not show a queued message
 
-If the agent is busy, let it finish. `Accepted` only confirms transport; an
-actual answer appears as `Answered`. A closed client cannot respond.
+Run `npx --yes @platys/relay@latest setup`, reopen Codex, and review the Relay entries in `/hooks`. Start or resume the intended conversation once so it attaches. The local companion starts with Relay's MCP connection. Messages remain recoverable through Relay checks; an idle wake requires the updated companion on the recipient's device.
 
-Alpha.13 had a 30-second idle-listener timeout. Update with
-`npx --yes @platys/relay@latest setup` and reopen Claude once. The corrected
-listener lasts up to seven uninterrupted idle days and is replaced at normal
-turn boundaries. After that idle limit, send a normal prompt to rearm it.
+If the conversation was busy, let its current turn finish. Delegated agent work may also need to finish before the parent session handles its message.
 
-## Claude says channels are blocked
+## Claude did not receive a message while idle
 
-You are using the older channel integration. Update Relay and run setup again,
-then open Claude normally. Alpha.13 uses native session hooks without the channel
-development flag. Managed policies that disable hooks or MCP still apply.
+Run setup again and open Claude using the generated **Claude with Relay** shortcut. Claude asks you to trust the channel the first time. Normal Claude launch keeps hook-based delivery after tool calls but does not wake an idle model. Check Relay's entries in `/hooks` and `/mcp` after reopening. Organization policy can disable channel support.
 
-## Relay disappeared after restarting Claude's MCP server
+## A new session did not pick up a checkpoint
 
-Send your next normal prompt. Relay's hooks restore the connection using that
-conversation's native identity. Do not paste a key from another conversation.
-The older manually configured channel adapter still requires manual reattachment.
-
-## Windows blocks the installer or a command
-
-The beta installer is unsigned; your device may require administrator review.
-Do not disable endpoint protection. If PowerShell blocks an npm shim, use
-`npm.cmd` or `relay.cmd`, or use Command Prompt.
+The local `relay_checkpoint` handoff is installed by the standard npm setup. Re-run setup, reopen the coding client, and review the Relay hooks. Checkpoints are local to this device and require the same Git checkout or a compatible linked worktree; an independent clone or another computer has a separate store. Existing conversations are not imported retroactively. Manual HTTP-only MCP configuration does not install the local checkpoint hooks.
 
 ## `relay` is not recognized
 
-Reopen the terminal after installing. Confirm `node --version` is at least
-22.13 and that `npm list --global @platys/relay` shows the package.
-The Windows setup app bundles its own runtime and does not require the CLI.
+Reopen the terminal after installing globally. Confirm `node --version` is at least `22.13`, then check `npm list --global @platys/relay`. For a one-time command without a global install, use `npx --yes @platys/relay@latest` followed by the command, such as `setup` or `usage --web`.
 
-## The GitHub download is unavailable
-
-The repository is private. Sign in to a GitHub account with access, or ask the
-owner to send the installer/package file. A Relay group invitation grants no
-GitHub repository access.
+In Windows PowerShell, use `npm.cmd`, `npx.cmd`, or `relay.cmd` if execution policy blocks the PowerShell shims.
 
 ## Setup says another Relay group is already connected
 
-The beta has one default group connection per device. Setup keeps the existing
-connection rather than silently replacing it. Keep a backup and follow the
-uninstall instructions before switching groups. Do not reuse another person's
-connection file.
+Setup keeps the device's saved group instead of silently replacing it. Follow the [uninstall steps](EASY_SETUP.md#uninstall) before switching groups. Do not reuse another person's connection file or membership token.
 
 ## The service is paused
 
-The hosted service has a shared request budget. Reinstalling or reconnecting does
-not reset it. The service owner must approve resuming service.
+The hosted service may be paused by its shared request budget. Reinstalling or reconnecting does not reset it. The service owner must approve resuming service.
 
 ## Reporting a problem
 
-Include your OS, Claude/Codex version, Relay version, and the visible error.
-Explain whether the recipient was idle, busy, or closed. Never attach membership
-tokens, invitation codes, conversation keys, or full private transcripts to an
-issue. Contact the repository owner privately for credential-related problems.
+Include your OS, Claude/Codex version, Relay version, and visible error. Say whether the recipient was idle, busy, or closed. Never attach membership tokens, invitation codes, conversation keys, or full private transcripts to an issue. Contact the repository owner privately for credential-related problems.
